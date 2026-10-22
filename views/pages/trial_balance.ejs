@@ -1,0 +1,12 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/accounting">Accounting</a><span class="sep">/</span><span>Trial Balance</span></div>
+<div class="searchbar"><form method="get" style="display:flex;gap:6px"><label class="small">s.d. tanggal <input type="date" name="to" value="<%= to %>" class="input" style="width:auto"></label><button class="btn">Tampilkan</button></form></div></div>
+<div class="content">
+  <div class="panel" data-test="trial-balance">
+    <div class="panel-h"><span>Trial Balance (Posted)</span><span class="<%= tb.balanced ? 'badge badge-green' : 'badge badge-red' %>"><%= tb.balanced ? 'Seimbang' : 'TIDAK seimbang' %></span></div>
+    <table class="list"><thead><tr><th>Code</th><th>Account</th><th>Type</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead><tbody>
+      <% for (const r of tb.rows) { %><tr><td><a href="/accounting/ledger?account=<%= r.code %>"><%= r.code %></a></td><td><%= r.name %></td><td class="muted"><%= r.account_type %></td><td class="num"><%= num(r.debit) %></td><td class="num"><%= num(r.credit) %></td><td class="num"><%= rp(r.balance) %></td></tr><% } %>
+    </tbody><tfoot><tr><td colspan="3">Total</td><td class="num"><%= num(tb.totals.debit) %></td><td class="num"><%= num(tb.totals.credit) %></td><td class="num"><%= rp(tb.totals.debit - tb.totals.credit) %></td></tr></tfoot></table>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

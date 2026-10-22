@@ -1,0 +1,107 @@
+<%- include('../partials/top', { title }) %>
+<% const t = pk.picking_type; const can = perms['inventory.operate']; const listHref = '/inventory/pickings?type=' + t; %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/inventory">Inventory</a><span class="sep">/</span><a href="<%= listHref %>"><%= pk.type_label %>s</a><span class="sep">/</span><span><%= pk.number %></span></div><div></div></div>
+
+<% if (t === 'out' && pk.state === 'ready' && can) { %><form method="post" action="/inventory/pickings/<%= pk.id %>/validate" id="validate-form"><input type="hidden" name="_csrf" value="<%= csrf %>"><% } %>
+<% if (t === 'in' && ['ready', 'qc'].includes(pk.state) && can) { %><form method="post" action="/inventory/pickings/<%= pk.id %>/qc" id="qc-form"><input type="hidden" name="_csrf" value="<%= csrf %>"><% } %>
+<div class="formbar">
+  <div class="left">
+    <% if (can) { %>
+      <% if (t === 'out' && pk.state === 'ready') { %>
+        <button class="btn btn-primary" type="submit" data-test="validate">Validate</button>
+        <label class="small"><input type="radio" name="backorder" value="yes" checked> Create backorder untuk sisa</label>
+        <label class="small"><input type="radio" name="backorder" value="no"> No backorder (batalkan sisa)</label>
+      <% } %>
+      <% if (t === 'in' && ['ready', 'qc'].includes(pk.state)) { %>
+        <button class="btn <%= pk.state === 'ready' ? 'btn-primary' : '' %>" type="submit" data-test="save-qc">Save Quality Check</button>
+      <% } %>
+      <% if (t === 'in' && pk.state === 'done') { %><span class="muted small">Receipt Done: kuantitas terkunci.</span><% } %>
+      <% if (t === 'out' && pk.state === 'done') { %><a class="btn" href="/inventory/pickings/<%= pk.id %>/return" data-test="return">Return</a><% } %>
+    <% } %>
+  </div>
+  <%- include('../partials/statusbar', { stages, current: pk.state }) %>
+</div>
+<div class="sheet" data-test="picking-form">
+  <%- include('../partials/smart', { buttons: [
+    pk.so_number ? { label: 'Sales Order', value: pk.so_number, href: '/sales/orders/' + pk.sale_order_id } : null,
+    pk.po_number ? { label: 'Purchase Order', value: pk.po_number, href: '/purchase/orders/' + pk.purchase_order_id } : null,
+    pk.backorders.length ? { label: 'Backorder', value: pk.backorders[0].number, href: '/inventory/pickings/' + pk.backorders[0].id } : null,
+    pk.returns.length ? { label: 'Returns', count: pk.returns.length, href: '/inventory/pickings/' + pk.returns[0].id } : null,
+    pk.entries.length ? { label: 'Journal', value: pk.entries[0].number, href: '/accounting/entries/' + pk.entries[0].id } : null,
+    pk.credit_notes.length ? { label: 'Credit Note', value: rp(pk.credit_notes[0].amount_total), href: '/invoicing/invoices/' + pk.credit_notes[0].id } : null,
+  ].filter(Boolean) }) %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= pk.number %><% if (pk.so_number || pk.po_number) { %> · <%= pk.so_number || pk.po_number %><% } %></h1>
+  <div class="subtitle"><%= pk.type_label %> · <%- ui.badge(pk.state) %><% if (pk.backorder_of_number) { %> · Backorder of <a href="/inventory/pickings/<%= pk.backorder_of_id %>"><%= pk.backorder_of_number %></a><% } %></div>
+  <div class="fields">
+    <div>
+      <div class="field"><span class="lbl">Contact</span><span><%= pk.partner_code ? pk.partner_code + ' — ' + pk.partner_name : '—' %></span></div>
+      <div class="field"><span class="lbl">Source Location</span><span><%= pk.src_code %> — <%= pk.src_name %></span></div>
+      <div class="field"><span class="lbl">Destination</span><span><%= pk.dest_code %> — <%= pk.dest_name %></span></div>
+    </div>
+    <div>
+      <div class="muted small">③ Secondary fields</div>
+      <div class="field"><span class="lbl">Status</span><span><%= stages.map((s) => s[1]).join(' → ') %></span></div>
+      <div class="field"><span class="lbl">Scheduled</span><span><%= fmtDate(pk.scheduled_date) %></span></div>
+      <div class="field"><span class="lbl">Done</span><span><%= pk.done_at ? fmtDateTime(pk.done_at) + ' oleh ' + pk.done_by_name : '—' %></span></div>
+    </div>
+  </div>
+
+  <div class="section-title">④ Lines</div>
+  <% if (t === 'out') { %>
+  <table class="list" data-test="picking-lines"><thead><tr><th>Product</th><th class="num">Demanded</th><th class="num">Reserved</th><th class="num">Done</th><% if (pk.state === 'done') { %><th class="num">Unit Cost</th><th class="num">COGS</th><th class="num">Returnable</th><% } %></tr></thead><tbody>
+    <% for (const m of pk.moves) { %><tr><td><b><%= m.sku %></b> <%= m.product_name %></td><td class="num"><%= m.qty_demand %></td><td class="num"><%= m.qty_reserved %></td>
+      <td class="num"><% if (pk.state === 'ready' && can) { %><input class="input-sm" name="done[m<%= m.id %>]" value="<%= m.qty_demand %>" inputmode="numeric" data-test="done-<%= m.sku %>"><% } else { %><%= m.qty_done %><% } %></td>
+      <% if (pk.state === 'done') { %><td class="num"><%= num(m.unit_cost) %></td><td class="num"><%= num(m.value) %></td><td class="num"><%= m.returnable %></td><% } %></tr><% } %>
+  </tbody></table>
+  <div class="muted small">Backorder: <%= pk.backorders.length ? pk.backorders.map((b) => b.number).join(', ') : '—' %>. Hanya unit yang benar-benar dikirim yang menjadi Done; sisanya tetap tereservasi pada backorder (SR-02, SR-04). COGS diakui pada standard cost saat stok keluar.</div>
+  <% } else if (t === 'in') { %>
+  <table class="list" data-test="picking-lines"><thead><tr><th>Product</th><th class="num">Ordered (sisa)</th><th class="num">Received</th><th class="num">Accepted</th><th class="num">Rejected</th><th class="num">Unit Cost (PO)</th><th class="num">Standard Cost</th></tr></thead><tbody>
+    <% for (const m of pk.moves) { const edit = ['ready', 'qc'].includes(pk.state) && can; %><tr><td><b><%= m.sku %></b> <%= m.product_name %><br><span class="muted small">Location: <%= pk.dest_code %></span></td><td class="num"><%= m.qty_demand %></td>
+      <% for (const f of ['received', 'accepted', 'rejected']) { %><td class="num"><% if (edit) { %><input class="input-sm" name="qc[m<%= m.id %>][<%= f %>]" value="<%= pk.state === 'qc' ? m['qty_' + f] : '' %>" inputmode="numeric" data-test="qc-<%= f %>"><% } else { %><%= m['qty_' + f] %><% } %></td><% } %>
+      <td class="num"><%= num(m.po_price) %></td><td class="num"><%= num(m.standard_cost) %></td></tr><% } %>
+  </tbody></table>
+  <div class="callout small">Receipt menyimpan <b>received</b>, <b>accepted</b>, <b>rejected</b> secara terpisah (Accepted + Rejected = Received). Hanya <b>accepted</b> yang menambah stok WH-PKU, valuasi persediaan, dan kewajiban GRNI (SR-19).</div>
+  <% } else if (t === 'int') { %>
+  <table class="list" data-test="picking-lines"><thead><tr><th>Product</th><th class="num">Quantity</th><th class="num">Reserved</th><th class="num">Done</th><th class="num">Value (tetap)</th></tr></thead><tbody>
+    <% for (const m of pk.moves) { %><tr><td><b><%= m.sku %></b> <%= m.product_name %></td><td class="num"><%= m.qty_demand %></td><td class="num"><%= m.qty_reserved %></td><td class="num"><%= m.qty_done %></td><td class="num"><%= num(m.qty_demand * m.standard_cost) %></td></tr><% } %>
+  </tbody></table>
+  <div class="callout small">Internal Transfer mengurangi lokasi asal dan menambah lokasi tujuan dengan kuantitas identik; jumlah dan nilai stok perusahaan tidak berubah sehingga tidak ada jurnal (SR-11).</div>
+  <% } else { %>
+  <table class="list" data-test="picking-lines"><thead><tr><th>Product</th><th class="num">Returned</th><th class="num">Layak jual</th><th class="num">Rusak</th><th class="num">Unit Cost</th></tr></thead><tbody>
+    <% for (const m of pk.moves) { %><tr><td><b><%= m.sku %></b> <%= m.product_name %></td><td class="num"><%= m.qty_demand %></td><td class="num"><%= m.qty_sellable %></td><td class="num"><%= m.qty_damaged %></td><td class="num"><%= num(m.unit_cost) %></td></tr><% } %>
+  </tbody></table>
+  <div class="callout small">Return tervalidasi menambah stok yang layak jual ke <%= pk.dest_code %>, membalik COGS, lalu membuat Credit Note sebesar harga + PBJT untuk kuantitas sah (SR-10).</div>
+  <% } %>
+</div>
+<% if ((t === 'out' && pk.state === 'ready' && can) || (t === 'in' && ['ready', 'qc'].includes(pk.state) && can)) { %></form><% } %>
+
+<% if (can && pk.state !== 'done' && pk.state !== 'cancel') { %>
+<div class="sheet" style="padding:10px 22px;display:flex;gap:8px;flex-wrap:wrap">
+  <% if (t === 'in' && pk.state === 'qc') { %>
+    <form method="post" action="/inventory/pickings/<%= pk.id %>/validate" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="validate-receipt">Validate Receipt</button></form>
+  <% } %>
+  <% if (t === 'int' && pk.state === 'draft') { %>
+    <form method="post" action="/inventory/pickings/<%= pk.id %>/todo" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="todo">Mark as To Do</button></form>
+  <% } %>
+  <% if (t === 'int' && pk.state === 'ready') { %>
+    <form method="post" action="/inventory/pickings/<%= pk.id %>/validate" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="validate">Validate</button></form>
+  <% } %>
+  <% if (t === 'ret' && pk.state === 'draft') { %>
+    <form method="post" action="/inventory/pickings/<%= pk.id %>/validate" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="validate">Validate Return</button></form>
+  <% } %>
+  <% if (pk.state !== 'qc') { %>
+  <form method="post" action="/inventory/pickings/<%= pk.id %>/cancel" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger" data-confirm="Batalkan dokumen ini dan lepas reservasi?">Cancel</button></form>
+  <% } %>
+</div>
+<% } %>
+<% if (t === 'in' && pk.state === 'done' && can) { %>
+<details class="sheet no-print" style="padding:10px 22px"><summary class="muted">Uji kontrol: coba ubah Quality Check setelah Done</summary>
+  <form method="post" action="/inventory/pickings/<%= pk.id %>/qc" style="margin-top:8px"><input type="hidden" name="_csrf" value="<%= csrf %>">
+    <% for (const m of pk.moves) { %><%= m.sku %>: received <input class="input-sm" name="qc[m<%= m.id %>][received]" value="<%= m.qty_received %>"> accepted <input class="input-sm" name="qc[m<%= m.id %>][accepted]" value="<%= m.qty_received %>"> rejected <input class="input-sm" name="qc[m<%= m.id %>][rejected]" value="0"><% } %>
+    <button class="btn btn-sm" data-test="retry-qc">Kirim</button>
+  </form>
+</details>
+<% } %>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

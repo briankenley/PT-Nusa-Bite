@@ -1,0 +1,24 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/counter">Quick Counter Order</a><span class="sep">/</span><span>Struk</span></div><div class="actions"><a class="btn btn-primary" href="/counter">Pesanan baru</a><a class="btn" href="javascript:print()">Cetak</a><% if (perms['sales.view']) { %><a class="btn" href="/sales/orders/<%= o.id %>">Lihat Sales Order</a><% } %></div></div>
+<div class="receipt" data-test="receipt">
+  <h3>PT NusaBite Cepat Saji</h3>
+  <div style="text-align:center">Outlet Sudirman · Pekanbaru</div>
+  <hr>
+  <div class="row"><span>No. Struk</span><span><%= invoice ? invoice.number : '-' %></span></div>
+  <div class="row"><span>Sales Order</span><span><%= o.number %></span></div>
+  <div class="row"><span>Waktu</span><span><%= fmtDateTime(o.confirmed_at) %></span></div>
+  <div class="row"><span>Kasir</span><span><%= o.created_by_name %></span></div>
+  <hr>
+  <% for (const l of o.lines) { %><div><%= l.sku %> <%= l.product_name %></div><div class="row"><span>&nbsp; <%= l.qty %> × <%= num(l.unit_price) %></span><span><%= num(l.subtotal) %></span></div><% } %>
+  <hr>
+  <div class="row"><span>Subtotal</span><span><%= num(o.amount_untaxed) %></span></div>
+  <div class="row"><span>PBJT 10%</span><span><%= num(o.amount_tax) %></span></div>
+  <div class="row"><b>TOTAL</b><b><%= rp(o.amount_total) %></b></div>
+  <% for (const p of o.payments) { %><div class="row"><span>Bayar (<%= p.method %>) <%= p.number %></span><span><%= num(p.amount) %></span></div><% } %>
+  <% if (change > 0) { %><div class="row"><span>Kembalian</span><span><%= num(change) %></span></div><% } %>
+  <hr>
+  <div class="row"><span>Delivery</span><span><%= o.pickings.map((p) => p.number + ' ' + p.state).join(', ') %></span></div>
+  <div class="row"><span>Status</span><span><%= invoice ? invoice.payment_state : '' %></span></div>
+  <div style="text-align:center;margin-top:8px">Terima kasih!</div>
+</div>
+<%- include('../partials/bottom') %>

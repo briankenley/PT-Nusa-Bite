@@ -1,0 +1,25 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/inventory/pickings?type=int">Internal Transfers</a><span class="sep">/</span><span>New</span></div><div></div></div>
+<form method="post" action="/inventory/transfers/new">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<div class="formbar"><div class="left"><button class="btn btn-primary" name="then" value="todo" data-test="save-todo">Save &amp; Mark as To Do</button><button class="btn" name="then" value="draft">Save Draft</button><a class="btn" href="/inventory/pickings?type=int">Discard</a></div>
+  <span class="statusbar"><span class="on">Draft</span><span>Ready</span><span>Done</span></span></div>
+<div class="sheet">
+  <h1>New Internal Transfer</h1>
+  <div class="fields"><div>
+    <div class="field"><label for="src">Source Location</label><select id="src" name="src"><option value="WH-PKU">WH-PKU — Gudang Pekanbaru</option><option value="OUTLET-SUD">OUTLET-SUD — Outlet Sudirman</option></select></div>
+    <div class="field"><label for="dest">Destination</label><select id="dest" name="dest"><option value="OUTLET-SUD">OUTLET-SUD — Outlet Sudirman</option><option value="WH-PKU">WH-PKU — Gudang Pekanbaru</option></select></div>
+  </div><div>
+    <div class="field"><label for="note">Note</label><input id="note" name="note"></div>
+    <div class="callout small">Mutasi outlet bukan penjualan baru: lokasi asal berkurang, tujuan bertambah dengan kuantitas identik, nilai stok perusahaan tetap (SR-11). Kuantitas dibatasi Available di lokasi asal (SR-04).</div>
+  </div></div>
+  <div class="section-title">④ Lines</div>
+  <table class="list lines" id="lines-table" data-tax="0"><thead><tr><th>Product</th><th class="num">Quantity</th><th></th><th class="num">Value</th><th></th></tr></thead><tbody>
+    <tr class="line-row"><td><select name="lines[0][product_id]" class="input js-product"><option value="">— pilih SKU —</option><% for (const p of products) { %><option value="<%= p.id %>" data-price="<%= p.price %>"><%= p.sku %> — <%= p.name %> <%= p.size %> · <%= p.hint %></option><% } %></select></td>
+      <td class="num"><input class="input-sm js-qty" name="lines[0][qty]" inputmode="numeric" data-test="transfer-qty"></td><td><input type="hidden" class="js-price" value=""></td><td class="num js-sub">—</td><td><button type="button" class="btn btn-sm js-del">✕</button></td></tr>
+  </tbody></table>
+  <p><button type="button" class="btn btn-sm" id="add-line">+ Add a line</button></p>
+  <div class="totals" id="totals-preview" style="display:none"><span class="js-untaxed"></span><span class="js-tax"></span><span class="js-total"></span></div>
+</div>
+</form>
+<%- include('../partials/bottom') %>

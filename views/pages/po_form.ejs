@@ -1,0 +1,42 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/purchase/orders">RFQ &amp; Purchase Orders</a><span class="sep">/</span><span><%= o.number %></span></div><div></div></div>
+<div class="formbar">
+  <div class="left">
+    <% if (o.state === 'draft' && perms['purchase.edit']) { %>
+      <form method="post" action="/purchase/orders/<%= o.id %>/confirm" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="confirm-po">Confirm Order</button></form>
+      <a class="btn" href="/purchase/orders/<%= o.id %>/edit" data-test="edit-rfq">Edit</a>
+    <% } %>
+    <% if (o.state === 'purchase' && perms['accounting.edit']) { %>
+      <form method="post" action="/accounting/bills/from-po/<%= o.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn <%= o.lines.some((l) => l.qty_received > l.qty_billed) ? 'btn-primary' : '' %>" data-test="create-bill">Create Bill</button></form>
+    <% } %>
+    <% if (o.state !== 'cancel' && perms['purchase.edit']) { %>
+      <form method="post" action="/purchase/orders/<%= o.id %>/cancel" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger" data-confirm="Batalkan PO?">Cancel</button></form>
+    <% } %>
+  </div>
+  <%- include('../partials/statusbar', { stages: [['draft', 'RFQ'], ['purchase', 'Purchase Order']], current: o.state }) %>
+</div>
+<div class="sheet" data-test="po-form">
+  <%- include('../partials/smart', { buttons: [
+    { label: 'Receipts', count: o.receipts.length, href: o.receipts.length ? '/inventory/pickings/' + o.receipts[o.receipts.length - 1].id : null },
+    { label: 'Vendor Bills', count: o.bills.length, href: o.bills.length ? '/accounting/bills/' + o.bills[0].id : null },
+  ] }) %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= o.number %> · <%= o.partner_code %></h1>
+  <div class="fields"><div>
+    <div class="field"><span class="lbl">Vendor</span><span><a href="/contacts/<%= o.partner_id %>"><%= o.partner_code %> — <%= o.partner_name %></a></span></div>
+    <div class="field"><span class="lbl">Order Date</span><span><%= fmtDate(o.order_date) %></span></div>
+    <div class="field"><span class="lbl">Deliver To</span><span><%= o.dest_code %></span></div>
+  </div><div>
+    <div class="muted small">③ Secondary fields</div>
+    <div class="field"><span class="lbl">Status</span><span>RFQ → Purchase Order · <%- ui.badge(o.state, o.state === 'draft' ? 'RFQ' : o.state === 'purchase' ? 'Purchase Order' : 'Cancelled') %></span></div>
+    <div class="field"><span class="lbl">Created / Confirmed</span><span class="small"><%= o.created_by_name %> <%= fmtDateTime(o.created_at) %><% if (o.confirmed_at) { %><br><%= o.confirmed_by_name %> <%= fmtDateTime(o.confirmed_at) %><% } %></span></div>
+  </div></div>
+  <div class="section-title">④ Lines · Vendor: <%= o.partner_name %></div>
+  <table class="list" data-test="po-lines"><thead><tr><th>Product</th><th class="num">Ordered</th><th class="num">Accepted</th><th class="num">Rejected</th><th class="num">Billed</th><th class="num">Unit Price</th><th>Tax</th><th class="num">Total</th></tr></thead><tbody>
+    <% for (const l of o.lines) { %><tr><td><b><%= l.sku %></b> <%= l.product_name %></td><td class="num"><%= l.qty %></td><td class="num"><%= l.qty_received %></td><td class="num"><%= l.qty_rejected %></td><td class="num"><%= l.qty_billed %></td><td class="num"><%= num(l.unit_price) %></td><td>PUR0 0%</td><td class="num"><%= num(l.total) %></td></tr><% } %>
+  </tbody></table>
+  <div class="totals"><div><span>Untaxed</span><span><%= rp(o.amount_untaxed) %></span></div><div><span>Tax</span><span><%= rp(o.amount_tax) %></span></div><div class="grand"><span>Total</span><span><%= rp(o.amount_total) %></span></div></div>
+  <div class="callout small">Konfirmasi PO tidak mengubah stok maupun AP. Stok dan GRNI bertambah saat Receipt (accepted) divalidasi; AP diakui saat Vendor Bill (maks. accepted) diposting (SR-05, SR-06, SR-19).</div>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

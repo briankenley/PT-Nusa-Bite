@@ -1,0 +1,39 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><span>Dashboard · KPI Operasional</span></div>
+<div class="searchbar"><form method="get" style="display:flex;gap:6px;align-items:center"><span class="small muted">Periode</span><input type="date" name="from" value="<%= from %>" class="input" style="width:auto"><input type="date" name="to" value="<%= to %>" class="input" style="width:auto"><button class="btn">Filter</button></form></div></div>
+<div class="content">
+  <div class="callout">③ Sumber: penjualan dari <b>invoice Posted</b>, kas dari <b>payment Posted</b>, stok dari <b>move Done</b>. Quotation Draft, SO yang belum ditagih, dan PO tanpa Receipt <b>tidak</b> menambah realisasi (SR-18).</div>
+  <div class="summary-cards" data-test="kpi">
+    <div class="kpi"><div class="l">Revenue Posted</div><div class="v" data-test="kpi-revenue"><%= rp(k.revenue) %></div><div class="h"><%= k.invoice_count %> invoice · retur <%= rp(k.returns) %> · neto <%= rp(k.net_revenue) %></div></div>
+    <div class="kpi"><div class="l">PBJT (neto)</div><div class="v" data-test="kpi-pbjt"><%= rp(k.pbjt) %></div><div class="h">Akun 202 PBJT Payable</div></div>
+    <div class="kpi"><div class="l">Cash Collected</div><div class="v" data-test="kpi-cash"><%= rp(k.cash_collected) %></div><div class="h">Customer payment Posted</div></div>
+    <div class="kpi"><div class="l">COGS</div><div class="v" data-test="kpi-cogs"><%= rp(k.cogs) %></div><div class="h">Margin kotor <%= rp(k.gross_margin) %></div></div>
+    <div class="kpi"><div class="l">Barang diterima (accepted)</div><div class="v"><%= rp(k.received_value) %></div><div class="h"><%= k.received_qty %> unit · Receipt Done</div></div>
+    <div class="kpi"><div class="l">Vendor Bills Posted</div><div class="v"><%= rp(k.bills) %></div><div class="h">Dibayar <%= rp(k.paid_out) %></div></div>
+    <div class="kpi"><div class="l">Salary Expense</div><div class="v"><%= rp(k.salary) %></div><div class="h">Payroll Posted</div></div>
+    <div class="kpi"><div class="l">Persediaan</div><div class="v"><%= num(k.stock.units) %> unit</div><div class="h">Valuasi <%= rp(k.stock.value) %> · GL 120 <%= rp(k.balances.inventory_gl) %></div></div>
+  </div>
+  <div class="summary-cards" style="margin-top:12px">
+    <div class="kpi"><div class="l">Cash (101)</div><div class="v"><%= rp(k.balances.cash) %></div></div>
+    <div class="kpi"><div class="l">Bank (102)</div><div class="v"><%= rp(k.balances.bank) %></div></div>
+    <div class="kpi"><div class="l">AR terbuka (110)</div><div class="v"><%= rp(k.balances.ar) %></div></div>
+    <div class="kpi"><div class="l">AP (201)</div><div class="v"><%= rp(k.balances.ap) %></div></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel"><div class="panel-h">Tidak dihitung sebagai realisasi</div>
+      <table class="list" data-test="kpi-excluded"><tbody>
+        <tr><td>Quotation Draft</td><td class="num"><%= k.excluded.draft_quotations.n %></td><td class="num"><%= rp(k.excluded.draft_quotations.value) %></td></tr>
+        <tr><td>Sales Order belum ditagih penuh</td><td class="num"><%= k.excluded.confirmed_uninvoiced.n %></td><td></td></tr>
+        <tr><td>Invoice/Bill Draft</td><td class="num"><%= k.excluded.draft_invoices.n %></td><td class="num"><%= rp(k.excluded.draft_invoices.value) %></td></tr>
+        <tr><td>RFQ Draft</td><td class="num"><%= k.excluded.rfq_draft.n %></td><td class="num"><%= rp(k.excluded.rfq_draft.value) %></td></tr>
+        <tr><td>PO tanpa Receipt Done</td><td class="num"><%= k.excluded.po_not_received.n %></td><td class="num"><%= rp(k.excluded.po_not_received.value) %></td></tr>
+      </tbody></table></div>
+    <div class="panel"><div class="panel-h">④ Sumber KPI (dokumen Posted)</div>
+      <table class="list" data-test="kpi-sources"><thead><tr><th>Dokumen</th><th>Tanggal</th><th class="num">Untaxed</th><th class="num">Amount</th></tr></thead><tbody>
+        <% for (const i of k.sources.invoices) { %><tr><td><a href="/invoicing/invoices/<%= i.id %>"><%= i.number %></a> <span class="muted small"><%= i.move_type === 'out_refund' ? 'credit note' : 'invoice' %> <%= i.partner_code %></span></td><td><%= fmtDate(i.invoice_date) %></td><td class="num"><%= (i.move_type === 'out_refund' ? '−' : '') + num(i.amount_untaxed) %></td><td class="num"><%= num(i.amount_total) %></td></tr><% } %>
+        <% for (const p of k.sources.payments) { %><tr><td><%= p.number %> <span class="muted small"><%= p.payment_type === 'inbound' ? 'penerimaan' : 'pembayaran' %> <%= p.invoice_number %></span></td><td><%= fmtDate(p.payment_date) %></td><td></td><td class="num"><%= num(p.amount) %></td></tr><% } %>
+        <% if (!k.sources.invoices.length && !k.sources.payments.length) { %><tr><td colspan="4" class="muted">Belum ada dokumen Posted pada periode ini.</td></tr><% } %>
+      </tbody></table></div>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

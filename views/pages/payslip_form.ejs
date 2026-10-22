@@ -1,0 +1,41 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/payroll">Payroll Simulation</a><span class="sep">/</span><span><%= ps.number %></span></div><div></div></div>
+<div class="formbar">
+  <div class="left">
+    <% const act = (a, label, cls, test) => `<form method="post" action="/payroll/${ps.id}/${a}" class="inline"><input type="hidden" name="_csrf" value="${csrf}"><button class="btn ${cls}" data-test="${test}">${label}</button></form>`; %>
+    <% if (ps.state === 'draft' && perms['payroll.prepare']) { %><%- act('approve', 'Approve (HR)', 'btn-primary', 'approve') %><% } %>
+    <% if (ps.state === 'approved' && perms['payroll.post']) { %><%- act('post', 'Post to Accounting', 'btn-primary', 'post') %><% } %>
+    <% if (ps.state === 'posted' && perms['payroll.post']) { %><%- act('pay', 'Bank Payment', 'btn-primary', 'pay') %><% } %>
+    <% if (['posted', 'paid'].includes(ps.state) && perms['payroll.post']) { %><%- act('post', 'Post lagi (uji SR-12)', 'btn-sm', 'post-again') %><% } %>
+  </div>
+  <%- include('../partials/statusbar', { stages: [['draft', 'Draft'], ['approved', 'Approved'], ['posted', 'Posted'], ['paid', 'Paid']], current: ps.state }) %>
+</div>
+<div class="sheet" data-test="payslip-form">
+  <%- include('../partials/smart', { buttons: [
+    ps.entry_number ? { label: 'Salary Journal', value: ps.entry_number, href: '/accounting/entries/' + ps.journal_entry_id } : null,
+    ps.payment_number ? { label: 'Bank Payment', value: ps.payment_number, href: '/accounting/entries/' + ps.payment_entry_id } : null,
+  ].filter(Boolean) }) %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= ps.number %></h1>
+  <div class="subtitle"><%= ps.employee_code %> · <%= ps.employee_name %> · <%= ps.job_title %> · <%= ps.location_code %></div>
+  <div class="fields"><div>
+    <div class="field"><span class="lbl">Period</span><span><%= ps.period %></span></div>
+    <div class="field"><span class="lbl">Planned Days</span><span><%= ps.planned_days %></span></div>
+    <div class="field"><span class="lbl">Attended Days</span><span>
+      <% if (ps.state === 'draft' && perms['payroll.prepare']) { %><form method="post" action="/payroll/<%= ps.id %>/attendance" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><input class="input-sm" name="attended_days" value="<%= ps.attended_days %>"> <button class="btn btn-sm">Simpan</button></form>
+      <% } else { %><%= ps.attended_days %><% } %></span></div>
+  </div><div>
+    <div class="muted small">③ Secondary fields</div>
+    <div class="field"><span class="lbl">Status</span><span>Draft → Approved → Posted → Paid</span></div>
+    <div class="field"><span class="lbl">Jejak</span><span class="small">Dibuat <%= ps.created_by_name %> <%= fmtDateTime(ps.created_at) %><% if (ps.approved_at) { %><br>Approved <%= ps.approved_by_name %> <%= fmtDateTime(ps.approved_at) %><% } %><% if (ps.posted_at) { %><br>Posted <%= ps.posted_by_name %> <%= fmtDateTime(ps.posted_at) %><% } %><% if (ps.paid_at) { %><br>Paid <%= ps.paid_by_name %> <%= fmtDateTime(ps.paid_at) %><% } %></span></div>
+  </div></div>
+  <div class="section-title">④ Lines</div>
+  <table class="list" data-test="payslip-lines"><thead><tr><th>Komponen</th><th>Dasar</th><th class="num">Jumlah</th></tr></thead><tbody>
+    <tr><td>Gaji pokok</td><td><%= rp(ps.base_salary) %> × <%= ps.attended_days %> / <%= ps.planned_days %> (<%= policy %>)</td><td class="num"><%= num(ps.base_paid) %></td></tr>
+    <tr><td>Tunjangan tetap</td><td><%= rp(ps.fixed_allowance) %> (penuh jika hadir ≥ 1 hari)</td><td class="num"><%= num(ps.allowance_paid) %></td></tr>
+    <tr><td>Potongan</td><td>Tidak ada (PPh 21, BPJS, lembur di luar lingkup simulasi)</td><td class="num">0</td></tr>
+  </tbody><tfoot><tr><td colspan="2">Gross = Net</td><td class="num" data-test="payslip-total"><%= num(ps.gross) %></td></tr></tfoot></table>
+  <div class="callout small">Posting: Dr 601 Salary Expense / Cr 203 Salary Payable. Pembayaran: Dr 203 / Cr 102 Bank. Payroll karyawan dan periode yang sama hanya dapat diposting sekali (SR-12).</div>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

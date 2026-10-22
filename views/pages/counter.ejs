@@ -1,0 +1,48 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><span>Sales</span><span class="sep">/</span><span>Quick Counter Order</span></div><div class="actions"><span class="muted small">Mode transaksi Sales untuk kasir — bukan aplikasi Point of Sale</span></div></div>
+<form method="post" action="/counter/checkout">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<div class="formbar">
+  <div class="left"><button class="btn btn-primary" type="submit" data-test="pay">Bayar &amp; Selesaikan</button>
+    <label class="small">Metode <select name="method" class="input" style="width:auto"><option value="cash">Cash (101)</option><option value="bank">Bank/QRIS (102)</option></select></label>
+    <label class="small">Uang diterima <input name="cash_received" class="input-sm" style="width:120px" placeholder="opsional" inputmode="numeric"></label>
+  </div>
+  <span class="statusbar"><span class="on">Draft</span><span>Paid / Done</span></span>
+</div>
+<div class="sheet" data-test="counter">
+  <div class="muted small">③ Main record</div>
+  <h1>Counter Order · Walk-in</h1>
+  <div class="subtitle">Lokasi OUTLET-SUD · PBJT 10% · Satu transaksi logis: Sales Order → Delivery Done → Invoice/struk → Payment → Jurnal → stok berkurang (SR-14). Stok harus tersedia (SR-04).</div>
+  <div class="section-title">④ Lines</div>
+  <table class="list lines" id="lines-table" data-tax="10">
+    <thead><tr><th>Product</th><th class="num">Harga</th><th class="num">Available outlet</th><th class="num">Qty</th><th class="num">Subtotal</th><th></th></tr></thead>
+    <tbody>
+      <tr class="line-row">
+        <td><select name="lines[0][product_id]" class="input js-product"><option value="">— pilih —</option>
+          <% for (const p of products) { %><option value="<%= p.id %>" data-price="<%= p.sales_price %>"><%= p.sku %> — <%= p.name %> <%= p.size %> · <%= rp(p.sales_price) %> · Avail <%= p.available %></option><% } %>
+        </select></td>
+        <td class="num muted">otomatis<input type="hidden" class="js-price" value=""></td>
+        <td class="num muted">lihat daftar</td>
+        <td class="num"><input class="input-sm js-qty" name="lines[0][qty]" value="1" inputmode="numeric"></td>
+        <td class="num js-sub">—</td>
+        <td><button type="button" class="btn btn-sm js-del">✕</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <p><button type="button" class="btn btn-sm" id="add-line">+ Add a line</button></p>
+  <div class="totals" id="totals-preview">
+    <div><span>Untaxed</span><span class="js-untaxed">—</span></div>
+    <div><span>PBJT 10%</span><span class="js-tax">—</span></div>
+    <div class="grand"><span>Total</span><span class="js-total">—</span></div>
+  </div>
+  <div class="section-title">Stok OUTLET-SUD saat ini</div>
+  <table class="list"><thead><tr><th>SKU</th><th>Produk</th><th class="num">Harga</th><th class="num">On Hand</th><th class="num">Reserved</th><th class="num">Available</th></tr></thead><tbody>
+    <% for (const p of products) { %><tr><td><%= p.sku %></td><td><%= p.name %> <%= p.size %></td><td class="num"><%= num(p.sales_price) %></td><td class="num"><%= p.on_hand %></td><td class="num"><%= p.reserved %></td><td class="num"><b><%= p.available %></b></td></tr><% } %>
+  </tbody></table>
+  <% if (recent.length) { %>
+  <div class="section-title">Transaksi kasir terakhir</div>
+  <table class="list"><tbody><% for (const r of recent) { %><tr><td><a href="/counter/receipt/<%= r.id %>"><%= r.number %></a></td><td><%= r.invoice_number || '' %></td><td class="num"><%= rp(r.amount_total) %></td><td class="muted"><%= fmtDateTime(r.created_at) %></td></tr><% } %></tbody></table>
+  <% } %>
+</div>
+</form>
+<%- include('../partials/bottom') %>

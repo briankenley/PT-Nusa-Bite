@@ -1,0 +1,6 @@
+<%# buttons: [{label, count, href, value}] %>
+<% if (buttons && buttons.length) { %>
+<div class="smart" data-test="smart-buttons">
+<% for (const b of buttons) { if (b.href) { %><a href="<%= b.href %>"><b><%= b.value !== undefined ? b.value : b.count %></b><%= b.label %></a><% } else { %><span><b><%= b.value !== undefined ? b.value : b.count %></b><%= b.label %></span><% } } %>
+</div>
+<% } %>

@@ -1,0 +1,103 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/sales/orders">Quotations &amp; Orders</a><span class="sep">/</span><span><%= o.number %></span></div><div class="actions">
+  <a class="btn btn-sm" href="/audit/trace?number=<%= o.number %>">Trace ⇢</a>
+  <a class="btn btn-sm" href="/sales/orders/<%= o.id %>/proforma">Pro-forma</a>
+</div></div>
+<div class="formbar">
+  <div class="left">
+    <% if (o.state === 'draft' && perms['sales.edit']) { %>
+      <form method="post" action="/sales/orders/<%= o.id %>/confirm" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="confirm">Confirm</button></form>
+      <a class="btn" href="/sales/orders/<%= o.id %>/edit">Edit</a>
+    <% } %>
+    <% if (o.state === 'draft' && o.discount_approval === 'pending' && perms['sales.approve_discount']) { %>
+      <form method="post" action="/sales/orders/<%= o.id %>/approve-discount" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-accent" data-test="approve-discount">Approve Discount</button></form>
+    <% } else if (o.state === 'draft' && o.discount_approval === 'pending') { %><span class="badge badge-orange">Menunggu persetujuan diskon Owner</span><% } %>
+    <% if (o.state === 'sale' && perms['invoicing.edit'] && o.lines.some((l) => l.toInvoice > 0)) { %>
+      <form method="post" action="/invoicing/from-sale/<%= o.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="create-invoice">Create Invoice</button></form>
+    <% } else if (o.state === 'sale' && perms['invoicing.edit']) { %>
+      <form method="post" action="/invoicing/from-sale/<%= o.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn" data-test="create-invoice" title="Tidak ada kuantitas Done yang belum ditagih">Create Invoice</button></form>
+    <% } %>
+    <% if (o.state === 'sale' && perms['sales.edit']) { %><a class="btn" href="/sales/orders/<%= o.id %>/edit" data-test="edit-locked">Edit 🔒</a><% } %>
+    <% if (o.state !== 'cancel' && perms['sales.edit']) { %>
+      <form method="post" action="/sales/orders/<%= o.id %>/cancel" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger" data-confirm="Batalkan pesanan ini?">Cancel</button></form>
+    <% } %>
+  </div>
+  <%- include('../partials/statusbar', { stages: [['draft', 'Draft (Quotation)'], ['sale', 'Confirmed (Sales Order)']], current: o.state === 'cancel' ? 'none' : o.state }) %>
+</div>
+<div class="sheet" data-test="so-form">
+  <%- include('../partials/smart', { buttons: [
+    { label: 'Delivery', count: o.pickings.filter((p) => p.picking_type === 'out').length, href: o.pickings.length ? '/inventory/pickings/' + (o.pickings.find((p) => p.picking_type === 'out') || o.pickings[0]).id : null },
+    { label: 'Invoices', count: o.invoices.filter((i) => i.move_type === 'out_invoice').length, href: o.invoices.length ? '/invoicing/invoices/' + o.invoices[0].id : null },
+    { label: 'Payments', count: o.payments.length, href: o.payments.length ? '/accounting/payments' : null },
+    { label: 'Returns', count: o.pickings.filter((p) => p.picking_type === 'ret').length },
+    { label: 'Revisions', count: o.revisions.length },
+  ] }) %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= o.number %> · <%= o.partner_code %></h1>
+  <div class="subtitle"><%- ui.badge(o.state, o.state === 'draft' ? 'Quotation (Draft)' : o.state === 'sale' ? 'Sales Order (Confirmed)' : 'Cancelled') %>
+    <% if (o.is_counter) { %><%- ui.badge('approved', 'Quick Counter') %><% } %>
+    <% if (o.discount_approval === 'pending') { %><%- ui.badge('pending', 'Diskon > 10% menunggu Owner') %><% } else if (o.discount_approval === 'approved') { %><%- ui.badge('approved', 'Diskon disetujui ' + (o.approved_by_name || '')) %><% } %>
+    <% if (o.state === 'sale') { %><span class="badge badge-grey">🔒 Harga/pajak/SKU/diskon terkunci</span><% } %>
+  </div>
+  <div class="fields">
+    <div>
+      <div class="field"><span class="lbl">Customer</span><span><a href="/contacts/<%= o.partner_id %>"><%= o.partner_code %> — <%= o.partner_name %></a></span></div>
+      <div class="field"><span class="lbl">Ship From</span><span><%= o.location_code %> — <%= o.location_name %></span></div>
+      <div class="field"><span class="lbl">Order Date</span><span><%= fmtDate(o.order_date) %></span></div>
+      <div class="field"><span class="lbl">Payment Terms</span><span><%= o.payment_term_code %></span></div>
+      <% if (o.opportunity_number) { %><div class="field"><span class="lbl">Opportunity</span><span><a href="/crm/opportunities/<%= o.opportunity_id %>"><%= o.opportunity_number %></a> (Lead <%= o.lead_number %>)</span></div><% } %>
+    </div>
+    <div>
+      <div class="muted small">③ Secondary fields</div>
+      <div class="field"><span class="lbl">Status</span><span><%= o.state === 'draft' ? 'Draft → Confirmed' : o.state === 'sale' ? 'Confirmed' : 'Cancelled' %> | PBJT 10%</span></div>
+      <div class="field"><span class="lbl">Delivery Status</span><span><%= o.delivery_status %></span></div>
+      <div class="field"><span class="lbl">Invoice Status</span><span><%= o.invoice_status %></span></div>
+      <div class="field"><span class="lbl">Created / Confirmed</span><span class="small"><%= o.created_by_name %> <%= fmtDateTime(o.created_at) %><% if (o.confirmed_at) { %><br><%= o.confirmed_by_name %> <%= fmtDateTime(o.confirmed_at) %><% } %></span></div>
+      <% if (o.exposure && !o.is_counter) { const proj = o.exposure.exposure + (o.state === 'draft' ? o.amount_total : 0); %>
+      <div class="callout <%= proj > o.credit_limit ? 'danger' : '' %> small" data-test="exposure">Credit exposure (SR-09): AR <%= rp(o.exposure.ar) %> + SO Confirmed belum ditagih <%= rp(o.exposure.uninvoiced) %><%= o.state === 'draft' ? ' + pesanan ini ' + rp(o.amount_total) : ' (termasuk pesanan ini)' %> = <b><%= rp(proj) %></b> / limit <%= rp(o.credit_limit) %></div>
+      <% } %>
+    </div>
+  </div>
+  <div class="section-title">④ Lines</div>
+  <table class="list" data-test="so-lines">
+    <thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Delivered</th><th class="num">Invoiced</th><th class="num">Returned</th><th class="num">Unit Price</th><th class="num">Disc.</th><th>Tax</th><th class="num">Subtotal</th></tr></thead>
+    <tbody>
+    <% for (const l of o.lines) { %>
+      <tr><td><b><%= l.sku %></b> <%= l.product_name %></td><td class="num"><%= l.qty %></td><td class="num"><%= l.qty_delivered %></td><td class="num"><%= l.qty_invoiced - l.qty_credited %></td><td class="num"><%= l.qty_returned %></td>
+        <td class="num"><%= num(l.unit_price) %><% if (l.unit_price !== l.list_price) { %><br><span class="muted small">list <%= num(l.list_price) %></span><% } %></td>
+        <td class="num"><%= Number(l.discount_pct) ? l.discount_pct + '%' : '' %><% if (l.needs_approval) { %><br><span class="badge badge-orange">efektif <%= l.effective_discount %>%</span><% } %></td>
+        <td>PBJT 10%</td><td class="num"><%= num(l.subtotal) %></td></tr>
+    <% } %>
+    </tbody>
+  </table>
+  <div class="totals" data-test="so-totals">
+    <div><span>Untaxed Amount</span><span><%= rp(o.amount_untaxed) %></span></div>
+    <div><span>PBJT 10%</span><span><%= rp(o.amount_tax) %></span></div>
+    <div class="grand"><span>Total</span><span><%= rp(o.amount_total) %></span></div>
+  </div>
+
+  <% if (o.state === 'sale' && (perms['sales.revision_request'] || o.revisions.length)) { %>
+  <div class="section-title" id="revision">Revisi harga / diskon (SR-08)</div>
+  <% if (perms['sales.revision_request']) { %>
+  <form method="post" action="/sales/orders/<%= o.id %>/revision" class="panel-b" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:0">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Baris<br><select name="line_id" class="input"><% for (const l of o.lines) { %><option value="<%= l.id %>"><%= l.sku %> (<%= num(l.unit_price) %>, <%= l.discount_pct %>%)</option><% } %></select></label>
+    <label>Harga baru<br><input name="new_unit_price" class="input-sm" style="width:110px" placeholder="tetap"></label>
+    <label>Diskon baru %<br><input name="new_discount" class="input-sm" placeholder="tetap"></label>
+    <label style="flex:1;min-width:200px">Alasan<br><input name="reason" class="input" required></label>
+    <button class="btn" data-test="request-revision">Ajukan Revisi</button>
+  </form>
+  <% } %>
+  <% if (o.revisions.length) { %>
+  <table class="list" style="margin-top:8px"><thead><tr><th>Revision</th><th>SKU</th><th>Harga</th><th>Diskon</th><th>Alasan</th><th>Diajukan</th><th>Status</th><th></th></tr></thead><tbody>
+    <% for (const r of o.revisions) { %><tr><td><%= r.number %></td><td><%= r.sku %></td><td><%= rp(r.old_unit_price) %> → <%= rp(r.new_unit_price) %></td><td><%= r.old_discount %>% → <%= r.new_discount %>%</td><td><%= r.reason %></td><td class="small"><%= r.requested_by_name %><br><%= fmtDateTime(r.requested_at) %></td><td><%- ui.badge(r.state) %><% if (r.decided_by_name) { %><br><span class="small muted"><%= r.decided_by_name %></span><% } %></td>
+      <td class="nowrap"><% if (r.state === 'pending' && perms['sales.revision_approve']) { %>
+        <form method="post" action="/sales/revisions/<%= r.id %>/approve" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-accent" data-test="approve-revision">Approve</button></form>
+        <form method="post" action="/sales/revisions/<%= r.id %>/reject" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm">Reject</button></form>
+      <% } else if (r.state === 'pending') { %><span class="muted small" data-revision-id="<%= r.id %>">Menunggu Owner</span><% } %></td></tr><% } %>
+  </tbody></table>
+  <% } %>
+  <% } %>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

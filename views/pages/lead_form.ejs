@@ -1,0 +1,44 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/crm">CRM pipeline</a><span class="sep">/</span><a href="/crm/leads">Leads</a><span class="sep">/</span><span><%= lead ? lead.number : 'New' %></span></div><div></div></div>
+<% if (!lead) { %>
+<form method="post" action="/crm/leads/new">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="formbar"><div class="left"><button class="btn btn-primary">Save</button><a class="btn" href="/crm">Discard</a></div><span class="statusbar"><span class="on">New</span><span>Qualified</span><span>Proposition</span><span>Won</span></span></div>
+  <div class="sheet">
+    <h1>New Lead</h1>
+    <div class="fields"><div>
+      <div class="field"><label for="name">Lead</label><input id="name" name="name" required placeholder="contoh: Katering wisuda 60 paket"></div>
+      <div class="field"><label for="partner_id">Customer</label><select id="partner_id" name="partner_id"><option value="">—</option><% for (const c of customers) { %><option value="<%= c.id %>"><%= c.code %> — <%= c.name %></option><% } %></select></div>
+    </div><div>
+      <div class="field"><label for="description">Description</label><textarea id="description" name="description" rows="3"></textarea></div>
+    </div></div>
+  </div>
+</form>
+<% } else { %>
+<div class="formbar">
+  <div class="left">
+    <% if (perms['crm.edit'] && lead.state === 'new') { %>
+    <form method="post" action="/crm/leads/<%= lead.id %>/convert" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="convert">Convert to Opportunity</button></form>
+    <% } else if (perms['crm.edit']) { %>
+    <form method="post" action="/crm/leads/<%= lead.id %>/convert" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn" data-test="convert" title="Lead sudah dikonversi; sistem akan menolak konversi ulang (SR-22)">Convert to Opportunity</button></form>
+    <% } %>
+  </div>
+  <span class="statusbar"><span class="<%= lead.state === 'new' ? 'on' : 'past' %>">New</span><span class="<%= lead.state === 'converted' ? 'on' : '' %>">Converted</span></span>
+</div>
+<div class="sheet" data-test="lead-form">
+  <%- include('../partials/smart', { buttons: lead.opportunity ? [{ label: 'Opportunity', value: lead.opportunity.number, href: '/crm/opportunities/' + lead.opportunity.id }] : [] }) %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= lead.number %> — <%= lead.name %></h1>
+  <div class="fields"><div>
+    <div class="field"><span class="lbl">Customer</span><span><%= lead.partner_code ? lead.partner_code + ' — ' + lead.partner_name : '—' %></span></div>
+    <div class="field"><span class="lbl">Description</span><span><%= lead.description || '' %></span></div>
+  </div><div>
+    <div class="muted small">③ Secondary fields</div>
+    <div class="field"><span class="lbl">Status</span><span><%- ui.badge(lead.state) %></span></div>
+    <div class="field"><span class="lbl">Converted</span><span><%= lead.converted_at ? fmtDateTime(lead.converted_at) + ' oleh ' + lead.converted_by_name : '—' %></span></div>
+  </div></div>
+  <% if (lead.opportunity) { %><div class="callout">Lead ini sudah menjadi <a href="/crm/opportunities/<%= lead.opportunity.id %>"><%= lead.opportunity.number %></a>. Konversi ulang akan ditolak sistem (SR-22).</div><% } %>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<% } %>
+<%- include('../partials/bottom') %>

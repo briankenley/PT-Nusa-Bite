@@ -1,0 +1,19 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/inventory/pickings/<%= pk.id %>"><%= pk.number %></a><span class="sep">/</span><span>Return Inspection</span></div><div></div></div>
+<form method="post" action="/inventory/pickings/<%= pk.id %>/return">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<div class="formbar"><div class="left"><button class="btn btn-primary" data-test="create-return">Create Return</button><a class="btn" href="/inventory/pickings/<%= pk.id %>">Discard</a></div><span class="statusbar"><span class="on">Draft (Inspection)</span><span>Done</span></span></div>
+<div class="sheet">
+  <h1>Return dari <%= pk.number %><% if (pk.so_number) { %> · <%= pk.so_number %><% } %></h1>
+  <div class="subtitle">Pelanggan <%= pk.partner_code %> <%= pk.partner_name %> → kembali ke <%= pk.src_code %></div>
+  <table class="list"><thead><tr><th>Product</th><th class="num">Delivered</th><th class="num">Bisa diretur</th><th class="num">Qty Return</th><th class="num">Layak jual</th><th class="num">Rusak</th></tr></thead><tbody>
+    <% for (const m of pk.moves.filter((x) => x.state === 'done')) { %><tr><td><b><%= m.sku %></b> <%= m.product_name %></td><td class="num"><%= m.qty_done %></td><td class="num"><%= m.returnable %></td>
+      <td class="num"><input class="input-sm" name="ret[m<%= m.id %>][qty]" value="" placeholder="0" data-test="ret-qty-<%= m.sku %>"></td>
+      <td class="num"><input class="input-sm" name="ret[m<%= m.id %>][sellable]" value="" placeholder="= qty"></td>
+      <td class="num"><input class="input-sm" name="ret[m<%= m.id %>][damaged]" value="" placeholder="0"></td></tr><% } %>
+  </tbody></table>
+  <div class="field" style="margin-top:10px"><label for="note">Catatan inspeksi</label><input id="note" name="note"></div>
+  <div class="callout small">Kuantitas retur tidak boleh melebihi kuantitas terkirim dikurangi retur sebelumnya (SR-10). Layak jual kembali ke stok; rusak dibebankan sebagai Inventory Shrinkage.</div>
+</div>
+</form>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,44 @@
+<%# cp: { crumbs: [{label, href}], actions: html, list: buildList state, views: [] } %>
+<div class="cp">
+  <div class="crumbs">
+    <span class="muted small" title="① Judul">①</span>
+    <% (cp.crumbs || []).forEach((c, i) => { %>
+      <% if (i > 0) { %><span class="sep">/</span><% } %>
+      <% if (c.href && i < cp.crumbs.length - 1) { %><a href="<%= c.href %>"><%= c.label %></a><% } else { %><span><%= c.label %></span><% } %>
+    <% }) %>
+  </div>
+  <div class="searchbar">
+    <% if (cp.list) { const L = cp.list; %>
+      <form class="search" method="get">
+        <% for (const [k, v] of Object.entries(cp.keep || {})) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } %>
+        <% for (const f of L.active) { %><input type="hidden" name="f" value="<%= f %>"><% } %>
+        <% if (!L.active.length) { %><input type="hidden" name="f" value=""><% } %>
+        <% if (L.groupBy) { %><input type="hidden" name="g" value="<%= L.groupBy %>"><% } %>
+        <% if (L.view !== 'list') { %><input type="hidden" name="v" value="<%= L.view %>"><% } %>
+        <% for (const f of L.filters.filter((x) => L.active.includes(x.key))) { %><span class="facet">⚑ <%= f.label %></span><% } %>
+        <% if (L.groupBy) { const g = L.groupBys.find((x) => x.key === L.groupBy); if (g) { %><span class="facet">≡ <%= g.label %></span><% } } %>
+        <input type="search" name="q" value="<%= L.q %>" placeholder="Search…" aria-label="Search">
+      </form>
+      <% if (L.filters.length) { %>
+      <details class="dd"><summary>⚑ Filters</summary><div class="menu">
+        <% let lastGroup = null; for (const f of L.filters) { const g = f.group || f.key; %>
+          <% if (lastGroup !== null && g !== lastGroup) { %><div class="grp"></div><% } lastGroup = g; %>
+          <a class="<%= L.active.includes(f.key) ? 'on' : '' %>" href="<%= L.toggleFilter(f.key) %>"><%= f.label %></a>
+        <% } %>
+      </div></details>
+      <% } %>
+      <% if (L.groupBys.length) { %>
+      <details class="dd"><summary>≡ Group By</summary><div class="menu">
+        <% for (const g of L.groupBys) { %><a class="<%= L.groupBy === g.key ? 'on' : '' %>" href="<%= L.setGroup(g.key) %>"><%= g.label %></a><% } %>
+      </div></details>
+      <% } %>
+      <% if (cp.views && cp.views.length > 1) { %>
+      <span class="views" title="② View">
+        <% for (const v of cp.views) { %><a class="<%= L.view === v ? 'on' : '' %>" href="<%= L.params({ v }) %>"><%= v === 'list' ? '☰ List' : v === 'kanban' ? '▦ Kanban' : v %></a><% } %>
+      </span>
+      <% } %>
+    <% } %>
+  </div>
+  <div class="actions"><%- cp.actions || '' %></div>
+  <div class="list-meta right"><% if (cp.list) { %><%= cp.list.rows.length %> / <%= cp.list.total %> record<% } %></div>
+</div>

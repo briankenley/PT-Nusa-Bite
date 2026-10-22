@@ -1,0 +1,13 @@
+<%- include('../partials/top', { title }) %>
+<div class="content">
+  <div class="sheet">
+    <div class="callout warn"><b>PRO-FORMA — bukan tagihan resmi.</b> Dokumen ini tidak memposting piutang. Customer Invoice resmi hanya memuat kuantitas Delivery Order Done (keputusan D-01, SR-02). <a href="javascript:print()" class="no-print">Cetak</a></div>
+    <h1>Pro-forma <%= o.number %></h1>
+    <div class="subtitle">PT NusaBite Cepat Saji · Pekanbaru · kepada <%= o.partner_code %> <%= o.partner_name %> · <%= fmtDate(o.order_date) %> · <%= o.payment_term_code %></div>
+    <table class="list"><thead><tr><th>Produk</th><th class="num">Qty</th><th class="num">Harga</th><th class="num">Disc.</th><th class="num">Subtotal</th></tr></thead><tbody>
+      <% for (const l of o.lines) { %><tr><td><%= l.sku %> <%= l.product_name %></td><td class="num"><%= l.qty %></td><td class="num"><%= num(l.unit_price) %></td><td class="num"><%= Number(l.discount_pct) ? l.discount_pct + '%' : '' %></td><td class="num"><%= num(l.subtotal) %></td></tr><% } %>
+    </tbody></table>
+    <div class="totals"><div><span>Untaxed</span><span><%= rp(o.amount_untaxed) %></span></div><div><span>PBJT 10%</span><span><%= rp(o.amount_tax) %></span></div><div class="grand"><span>Total</span><span><%= rp(o.amount_total) %></span></div></div>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,12 @@
+<%- include('../partials/top', { title: title }) %>
+<div class="content">
+  <div class="panel" style="max-width:760px" data-test="error-<%= code %>">
+    <div class="panel-h"><span><%= code %> — <%= title %></span><% if (rule) { %><span class="flash-error rule" style="padding:2px 8px;border-radius:3px"><%= rule %></span><% } %></div>
+    <div class="panel-b">
+      <p><%= message %></p>
+      <% if (code === 403) { %><p class="muted small">Kontrol akses berbasis peran (SR-13). Upaya akses ini sudah dicatat pada Audit Log dengan result <b>denied</b> beserta aktor dan waktu.</p><% } %>
+      <p><a class="btn" href="javascript:history.back()">← Kembali</a> <a class="btn" href="/">Apps</a></p>
+    </div>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

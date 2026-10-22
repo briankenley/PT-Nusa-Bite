@@ -1,0 +1,27 @@
+<%# products, lines: [{product_id, qty, unit_price, discount}], showDiscount, priceLabel, taxRate %>
+<table class="list lines" id="lines-table" data-tax="<%= taxRate %>">
+  <thead><tr><th>Product (Variant SKU)</th><th class="num">Quantity</th><th class="num"><%= priceLabel || 'Unit Price' %></th><% if (showDiscount) { %><th class="num">Disc. %</th><% } %><th class="num">Tax</th><th class="num">Subtotal</th><th></th></tr></thead>
+  <tbody>
+  <% const rows = lines && lines.length ? lines : [{}]; rows.forEach((l, i) => { %>
+    <tr class="line-row">
+      <td><select name="lines[<%= i %>][product_id]" class="input js-product">
+        <option value="">— pilih SKU —</option>
+        <% for (const p of products) { %><option value="<%= p.id %>" data-price="<%= p.price %>" <%= String(l.product_id) === String(p.id) ? 'selected' : '' %>><%= p.sku %> — <%= p.name %> <%= p.size %> (<%= p.uom %>)<%= p.hint ? ' · ' + p.hint : '' %></option><% } %>
+      </select></td>
+      <td class="num"><input class="input-sm js-qty" name="lines[<%= i %>][qty]" value="<%= l.qty || '' %>" inputmode="numeric"></td>
+      <td class="num"><input class="input-sm js-price" name="lines[<%= i %>][unit_price]" value="<%= l.unit_price !== undefined ? l.unit_price : '' %>" placeholder="otomatis" inputmode="numeric" style="width:110px"></td>
+      <% if (showDiscount) { %><td class="num"><input class="input-sm js-disc" name="lines[<%= i %>][discount]" value="<%= l.discount || '' %>" placeholder="0" style="width:70px"></td><% } %>
+      <td class="num muted"><%= taxRate %>%</td>
+      <td class="num js-sub">—</td>
+      <td><button type="button" class="btn btn-sm js-del" title="Hapus baris">✕</button></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+<p><button type="button" class="btn btn-sm" id="add-line">+ Add a line</button></p>
+<div class="totals" id="totals-preview">
+  <div><span>Untaxed Amount</span><span class="js-untaxed">—</span></div>
+  <div><span>Tax (<%= taxRate %>%)</span><span class="js-tax">—</span></div>
+  <div class="grand"><span>Total</span><span class="js-total">—</span></div>
+  <div class="muted small">Pratinjau; angka final dihitung ulang oleh server (pajak dibulatkan per baris).</div>
+</div>

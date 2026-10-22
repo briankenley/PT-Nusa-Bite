@@ -1,0 +1,17 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><span>Accounting Overview</span></div><div class="actions"><a class="btn" href="/accounting/trial-balance">Trial Balance</a></div></div>
+<div class="content">
+  <div class="summary-cards">
+    <a class="kpi" href="/invoicing/invoices" style="color:inherit"><div class="l">Customer Invoices</div><div class="v"><%= counts.inv_open %> terbuka</div><div class="h"><%= counts.inv_draft %> draft</div></a>
+    <a class="kpi" href="/accounting/bills" style="color:inherit"><div class="l">Vendor Bills</div><div class="v"><%= counts.bill_open %> terbuka</div><div class="h"><%= counts.bill_draft %> draft</div></a>
+    <a class="kpi" href="/invoicing/credit-notes" style="color:inherit"><div class="l">Credit Notes</div><div class="v"><%= counts.cn_draft %> draft</div><div class="h">dari retur tervalidasi</div></a>
+    <a class="kpi" href="/payroll?f=approved" style="color:inherit"><div class="l">Payroll siap diposting</div><div class="v"><%= counts.ps_approved %></div><div class="h">Approved oleh HR</div></a>
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-h"><span>Saldo akun (Posted)</span><span class="<%= tb.balanced ? 'badge badge-green' : 'badge badge-red' %>">Debit <%= rp(tb.totals.debit) %> = Kredit <%= rp(tb.totals.credit) %></span></div>
+    <table class="list"><thead><tr><th>Code</th><th>Account</th><th>Type</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead><tbody>
+      <% for (const r of tb.rows) { %><tr class="click" onclick="location.href='/accounting/ledger?account=<%= r.code %>'"><td><a href="/accounting/ledger?account=<%= r.code %>"><%= r.code %></a></td><td><%= r.name %></td><td class="muted"><%= r.account_type %></td><td class="num"><%= num(r.debit) %></td><td class="num"><%= num(r.credit) %></td><td class="num"><b><%= rp(r.balance) %></b></td></tr><% } %>
+    </tbody></table>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

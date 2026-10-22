@@ -1,0 +1,7 @@
+<% for (const f of (flash || [])) { %>
+<div class="flash flash-<%= f.type %>" role="alert" data-test="flash-<%= f.type %>">
+  <strong><%= f.type === 'error' ? 'Ditolak:' : f.type === 'success' ? 'Berhasil:' : 'Info:' %></strong>
+  <span data-test="flash-message"><%= f.message %></span>
+  <% if (f.rule) { %><span class="rule"><%= f.rule %></span><% } %>
+</div>
+<% } %>

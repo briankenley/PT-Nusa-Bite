@@ -1,0 +1,20 @@
+<%# list (buildList), card(r) -> {title, subtitle, left, right}, href(r), columnsOrder %>
+<% const renderCard = (r) => { const c = card(r); %>
+  <a class="kcard" href="<%= href(r) %>">
+    <div class="t"><%= c.title %></div>
+    <% if (c.subtitle) { %><div class="s"><%= c.subtitle %></div><% } %>
+    <div class="f"><span><%- c.left || '' %></span><span><%- c.right || '' %></span></div>
+  </a>
+<% }; %>
+<% if (list.groups) { %>
+<div class="kanban" data-test="kanban">
+  <% for (const g of list.groups) { %>
+  <div class="kcol"><h4><span><%= g.label %></span><span class="muted"><%= g.rows.length %></span></h4>
+    <% g.rows.forEach(renderCard) %>
+    <% if (!g.rows.length) { %><div class="muted small" style="padding:4px">—</div><% } %>
+  </div>
+  <% } %>
+</div>
+<% } else { %>
+<div class="kanban cards" data-test="kanban"><% list.rows.forEach(renderCard) %></div>
+<% } %>

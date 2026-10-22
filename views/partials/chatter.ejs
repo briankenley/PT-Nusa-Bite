@@ -1,0 +1,36 @@
+<%# chatter: { docType, docId, related: [{label, href}], messages, logs } %>
+<section class="chatter panel" data-test="chatter">
+  <div class="panel-h"><span>⑤ Related Docs · Log Notes · Audit / History</span></div>
+  <div class="panel-b">
+    <div class="related">
+      <% if (chatter.related && chatter.related.length) { for (const r of chatter.related) { %>
+        <% if (r.href) { %><a href="<%= r.href %>"><%= r.label %></a><% } else { %><span><%= r.label %></span><% } %>
+      <% } } else { %><span class="muted">Belum ada dokumen terkait</span><% } %>
+    </div>
+    <div class="grid">
+      <div>
+        <div class="section-title">Log Notes</div>
+        <form method="post" action="/notes" class="no-print" style="display:flex;gap:6px;margin-bottom:6px">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <input type="hidden" name="doc_type" value="<%= chatter.docType %>">
+          <input type="hidden" name="doc_id" value="<%= chatter.docId %>">
+          <input class="input" name="body" placeholder="Tulis log note…" maxlength="500" required>
+          <button class="btn btn-sm">Log</button>
+        </form>
+        <% for (const m of chatter.messages) { %>
+          <div class="msg"><span class="who"><%= m.author_name %></span><span class="when"><%= fmtDateTime(m.created_at) %></span>
+            <% if (m.kind === 'note') { %><span class="badge badge-blue">note</span><% } %><div><%= m.body %></div></div>
+        <% } %>
+        <% if (!chatter.messages.length) { %><div class="muted small">Belum ada catatan.</div><% } %>
+      </div>
+      <div>
+        <div class="section-title">Audit / History (actor · time · action · document)</div>
+        <% for (const a of chatter.logs) { %>
+          <div class="audit-row"><span class="muted"><%= fmtDateTime(a.ts) %></span><span><b><%= a.username %></b><br><span class="muted small"><%= a.role %></span></span>
+            <span><code><%= a.action %></code> <%- ui.badge(a.result) %> <%= a.doc_number || '' %><br><span class="small"><%= a.message %></span></span></div>
+        <% } %>
+        <% if (!chatter.logs.length) { %><div class="muted small">Belum ada jejak audit.</div><% } %>
+      </div>
+    </div>
+  </div>
+</section>

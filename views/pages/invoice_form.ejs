@@ -1,0 +1,83 @@
+<%- include('../partials/top', { title }) %>
+<% const isBill = inv.move_type === 'in_invoice'; const isRefund = inv.move_type === 'out_refund'; const base = isBill ? '/accounting/bills' : '/invoicing/invoices'; const listHref = isBill ? '/accounting/bills' : isRefund ? '/invoicing/credit-notes' : '/invoicing/invoices'; %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="<%= listHref %>"><%= inv.type_label %>s</a><span class="sep">/</span><span><%= inv.number || 'Draft' %></span></div><div></div></div>
+<div class="formbar">
+  <div class="left">
+    <% if (inv.state === 'draft' && canEdit) { %>
+      <form method="post" action="/invoicing/invoices/<%= inv.id %>/post" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-test="post">Confirm (Post)</button></form>
+    <% } %>
+    <% if (inv.state === 'posted' && canEdit) { %>
+      <form method="post" action="/invoicing/invoices/<%= inv.id %>/post" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm" data-test="post-again" title="Uji SR-12: permintaan Post kedua akan ditolak">Post lagi (uji SR-12)</button></form>
+    <% } %>
+    <% if (inv.state === 'posted' && !isRefund && canPay && inv.amount_residual > 0) { %>
+      <a class="btn btn-primary" href="#register-payment" data-test="open-payment">Register Payment</a>
+    <% } %>
+  </div>
+  <%- include('../partials/statusbar', { stages: [['draft', 'Draft'], ['posted', 'Posted'], ['paid', 'Paid']], current: inv.state === 'posted' && inv.payment_state === 'paid' ? 'paid' : inv.state }) %>
+</div>
+<div class="sheet" data-test="invoice-form">
+  <%- include('../partials/smart', { buttons: [
+    inv.so_number ? { label: 'Sales Order', value: inv.so_number, href: '/sales/orders/' + inv.sale_order_id } : null,
+    inv.po_number ? { label: 'Purchase Order', value: inv.po_number, href: '/purchase/orders/' + inv.purchase_order_id } : null,
+    inv.entry_number ? { label: 'Journal Entry', value: inv.entry_number, href: '/accounting/entries/' + inv.journal_entry_id } : null,
+    { label: 'Payments', count: inv.payments.length },
+    inv.origin_number ? { label: 'Invoice asal', value: inv.origin_number, href: '/invoicing/invoices/' + inv.origin_invoice_id } : null,
+  ].filter(Boolean) }) %>
+  <div class="muted small">③ Main record · <%= inv.type_label %></div>
+  <h1><%= inv.number || 'Draft ' + inv.type_label %><% if (inv.so_number || inv.po_number) { %> · <%= inv.so_number || inv.po_number %><% } %></h1>
+  <div class="subtitle"><%- ui.badge(inv.state) %> <% if (inv.state === 'posted') { %><%- ui.badge(inv.payment_state, isRefund && inv.payment_state === 'paid' ? 'Reconciled' : null) %><% } %></div>
+  <div class="fields"><div>
+    <div class="field"><span class="lbl"><%= isBill ? 'Vendor' : 'Customer' %></span><span><a href="/contacts/<%= inv.partner_id %>"><%= inv.partner_code %> — <%= inv.partner_name %></a></span></div>
+    <div class="field"><span class="lbl">Invoice Date</span><span><%= inv.invoice_date ? fmtDate(inv.invoice_date) : '— (saat Post)' %></span></div>
+    <div class="field"><span class="lbl">Due Date</span><span><%= inv.due_date ? fmtDate(inv.due_date) : '—' %> (<%= inv.payment_term_code %>)</span></div>
+  </div><div>
+    <div class="muted small">③ Secondary fields</div>
+    <div class="field"><span class="lbl">Status</span><span>Draft → Posted → Paid</span></div>
+    <div class="field"><span class="lbl">Created / Posted</span><span class="small"><%= inv.created_by_name %> <%= fmtDateTime(inv.created_at) %><% if (inv.posted_at) { %><br><%= inv.posted_by_name %> <%= fmtDateTime(inv.posted_at) %><% } %></span></div>
+    <% if (inv.note) { %><div class="field"><span class="lbl">Note</span><span><%= inv.note %></span></div><% } %>
+  </div></div>
+
+  <div class="section-title">④ Lines</div>
+  <% const editQty = inv.state === 'draft' && canEdit && !isRefund; %>
+  <% if (editQty) { %><form method="post" action="/invoicing/invoices/<%= inv.id %>/qty"><input type="hidden" name="_csrf" value="<%= csrf %>"><% } %>
+  <table class="list" data-test="invoice-lines"><thead><tr><th>Product</th><th class="num">Quantity</th><th class="num">Unit Price</th><th class="num">Disc.</th><th>Tax</th><th class="num">Subtotal</th><th class="num">Tax Amount</th></tr></thead><tbody>
+    <% for (const l of inv.lines) { %><tr><td><b><%= l.sku %></b> <%= l.product_name %></td>
+      <td class="num"><% if (editQty) { %><input class="input-sm" name="qty[l<%= l.id %>]" value="<%= l.qty %>" data-test="inv-qty-<%= l.sku %>"><% } else { %><%= l.qty %><% } %></td>
+      <td class="num"><%= num(l.unit_price) %></td><td class="num"><%= Number(l.discount_pct) ? l.discount_pct + '%' : '' %></td><td><%= l.tax_code === 'PBJT10' ? 'PBJT 10%' : 'PUR0 0%' %></td><td class="num"><%= num(l.subtotal) %></td><td class="num"><%= num(l.tax_amount) %></td></tr><% } %>
+  </tbody></table>
+  <% if (editQty) { %><p><button class="btn btn-sm" data-test="save-qty">Simpan kuantitas</button> <span class="muted small">Harga, diskon, dan pajak mengikuti dokumen sumber yang terkunci (SR-08).</span></p></form><% } %>
+  <div class="totals" data-test="invoice-totals">
+    <div><span>Untaxed Amount</span><span><%= rp(inv.amount_untaxed) %></span></div>
+    <div><span><%= isBill ? 'Tax (PUR0 0%)' : 'PBJT 10%' %></span><span><%= rp(inv.amount_tax) %></span></div>
+    <div class="grand"><span>Total</span><span><%= rp(inv.amount_total) %></span></div>
+    <% for (const r of inv.reconciliations) { %><div class="small"><span>Paid by <%= r.source_number %> (<%= r.source_type === 'payment' ? 'payment' : 'credit note' %>)</span><span>− <%= rp(r.amount) %></span></div><% } %>
+    <% for (const a of inv.applied_to) { %><div class="small"><span>Diterapkan ke <%= a.number %></span><span><%= rp(a.amount) %></span></div><% } %>
+    <% if (inv.state === 'posted') { %><div class="grand"><span><%= isRefund ? 'Sisa kredit' : 'Amount Due' %></span><span data-test="amount-due"><%= rp(inv.amount_residual) %></span></div><% } %>
+  </div>
+
+  <% if (inv.match) { %>
+  <div class="section-title"><%= isBill ? 'Three-way match: PO · Receipt (accepted) · Bill' : 'Kuantitas Sales Order · Delivery Done · Invoiced' %></div>
+  <table class="list" data-test="match"><thead><tr><th>SKU</th><th class="num">Ordered</th><% if (isBill) { %><th class="num">Accepted</th><th class="num">Rejected</th><th class="num">Billed</th><% } else { %><th class="num">Delivered (Done)</th><th class="num">Returned</th><th class="num">Invoiced</th><% } %></tr></thead><tbody>
+    <% for (const m of inv.match) { %><tr><td><%= m.sku %></td><td class="num"><%= m.ordered %></td><% if (isBill) { %><td class="num"><%= m.accepted %></td><td class="num"><%= m.rejected %></td><td class="num"><%= m.billed %></td><% } else { %><td class="num"><%= m.delivered %></td><td class="num"><%= m.returned %></td><td class="num"><%= m.invoiced %></td><% } %></tr><% } %>
+  </tbody></table>
+  <% } %>
+
+  <% if (inv.state === 'posted' && !isRefund && canPay) { %>
+  <div class="section-title" id="register-payment">Register Payment</div>
+  <form method="post" action="/invoicing/invoices/<%= inv.id %>/pay" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Amount<br><input name="amount" class="input-sm" style="width:140px" value="<%= inv.amount_residual %>" data-test="pay-amount"></label>
+    <label>Method<br><select name="method" class="input" style="width:auto"><option value="bank">Bank (102)</option><option value="cash">Cash (101)</option></select></label>
+    <label>Memo<br><input name="memo" class="input" style="width:220px"></label>
+    <button class="btn btn-primary" data-test="pay">Create Payment</button>
+    <span class="muted small">Pembayaran parsial diizinkan; melebihi sisa <%= rp(inv.amount_residual) %> ditolak (SR-20).</span>
+  </form>
+  <% } %>
+  <% if (inv.payments.length) { %>
+  <table class="list" style="margin-top:10px"><thead><tr><th>Payment</th><th>Date</th><th>Method</th><th>By</th><th class="num">Amount</th></tr></thead><tbody>
+    <% for (const p of inv.payments) { %><tr><td><a href="/accounting/entries/<%= p.journal_entry_id %>"><%= p.number %></a></td><td><%= fmtDate(p.payment_date) %></td><td><%= p.method %></td><td><%= p.created_by_name %></td><td class="num"><%= rp(p.amount) %></td></tr><% } %>
+  </tbody></table>
+  <% } %>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

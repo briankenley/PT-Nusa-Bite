@@ -1,0 +1,11 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><span>Inventory Overview</span></div><div class="actions"><% if (perms['inventory.operate']) { %><a class="btn btn-primary" href="/inventory/transfers/new">New Internal Transfer</a><% } %></div></div>
+<div class="content">
+  <div class="summary-cards" data-test="inventory-overview">
+    <% for (const c of cards) { %>
+      <a class="kpi" href="<%= c.href %>" style="color:inherit"><div class="l"><%= c.title %></div><div class="v"><%= c.todo %> to process</div><div class="h"><%= c.sub %> · <%= c.done %> done</div></a>
+    <% } %>
+    <a class="kpi" href="/inventory/stock" style="color:inherit"><div class="l">Stok perusahaan</div><div class="v"><%= num(totals.on_hand) %> unit</div><div class="h">Valuasi <%= rp(totals.value) %> · Reserved <%= totals.reserved %></div></a>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= typeof title !== 'undefined' && title ? title + ' — ' : '' %>NusaBite ERP</title>
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<% if (user) { %>
+<header class="topbar">
+  <a class="apps-btn" href="/" title="App switcher" data-test="apps"><span class="grid-icon"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span> Apps</a>
+  <span class="app-name">· <%= currentApp ? currentApp.name : 'Home' %></span>
+  <span class="spacer"></span>
+  <details class="userbox">
+    <summary><span class="avatar"><%= user.username.slice(0, 2).toUpperCase() %></span><span><%= user.username %> / <%= company %></span> ▾</summary>
+    <div class="dropdown">
+      <div><b><%= user.name %></b><br><span class="muted small">Peran: <%= roleLabel %> · PT NusaBite Cepat Saji</span></div>
+      <a href="/">Apps</a>
+      <form method="post" action="/logout" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button type="submit">Log out</button></form>
+    </div>
+  </details>
+</header>
+<div class="shell<%= menu ? '' : ' no-menu' %>">
+<% if (menu) { %>
+  <nav class="sidebar" aria-label="Menu aplikasi">
+    <div class="menu-title">Menu</div>
+    <% const sections = [['overview', 'Overview'], ['documents', 'Orders / Documents'], ['reporting', 'Reporting'], ['configuration', 'Configuration']]; %>
+    <% for (const [key, label] of sections) { if (!menu[key] || !menu[key].length) continue; %>
+      <div class="section"><%= label %></div>
+      <% for (const item of menu[key]) { const active = url === item.href || (!item.href.includes('?') && path === item.href && !url.includes('?')); %>
+        <a href="<%= item.href %>" class="<%= active ? 'active' : '' %>"><%= item.label %></a>
+      <% } %>
+    <% } %>
+  </nav>
+<% } %>
+  <main class="main">
+<% } else { %>
+  <main>
+<% } %>
+<%- include('flash') %>

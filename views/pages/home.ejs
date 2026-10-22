@@ -1,0 +1,19 @@
+<%- include('../partials/top', { title: 'Apps' }) %>
+<div class="home">
+  <h2>Selamat datang, <%= user.name %></h2>
+  <div class="muted">① Beranda dan app switcher · peran <b><%= roleLabel %></b> · Company: PT NusaBite Cepat Saji</div>
+  <div class="app-grid" data-test="app-switcher">
+    <% for (const a of apps) { %>
+      <a class="app-tile" href="<%= a.home(user) %>" data-app="<%= a.key %>"><span class="ic" style="background:<%= a.color %>"><%= a.icon %></span><span><%= a.name %></span></a>
+    <% } %>
+  </div>
+  <% if (summary.length) { %>
+  <div class="section-title">Ringkasan modul yang diizinkan untuk peran Anda</div>
+  <div class="summary-cards">
+    <% for (const s of summary) { %>
+      <a class="kpi" href="<%= s.href %>" style="color:inherit"><div class="l"><%= s.label %></div><div class="v"><%= s.value %></div><div class="h"><%= s.hint %></div></a>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

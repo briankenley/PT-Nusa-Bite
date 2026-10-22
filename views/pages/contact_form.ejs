@@ -1,0 +1,53 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/contacts">Contacts</a><span class="sep">/</span><span><%= isNew ? 'New' : c.code + ' — ' + c.name %></span></div><div></div></div>
+<form method="post" action="<%= isNew ? '/contacts/new' : '/contacts/' + c.id %>">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<input type="hidden" name="kind" value="<%= kind %>">
+<div class="formbar">
+  <div class="left">
+    <% if (canEdit) { %><button class="btn btn-primary" type="submit" data-test="save"><%= isNew ? 'Save' : 'Save changes' %></button><% } else { %><span class="muted">Read-only untuk peran <%= roleLabel %></span><% } %>
+    <a class="btn" href="/contacts">Discard</a>
+  </div>
+  <span class="statusbar"><span class="on"><%= kind === 'vendor' ? 'Vendor' : 'Customer' %></span></span>
+</div>
+<div class="sheet" data-test="contact-form">
+  <% if (!isNew && c.exposure) { %>
+  <%- include('../partials/smart', { buttons: [
+    { label: 'AR terbuka', value: rp(c.exposure.ar) },
+    { label: 'SO belum ditagih', value: rp(c.exposure.uninvoiced) },
+    { label: 'Credit exposure', value: rp(c.exposure.exposure) },
+    { label: 'Sales Orders', count: c.sale_count, href: '/sales/orders?q=' + c.code },
+  ] }) %>
+  <% } %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= isNew ? 'New ' + (kind === 'vendor' ? 'Vendor' : 'Customer') : c.code + ' — ' + c.name %></h1>
+  <div class="fields">
+    <div>
+      <div class="field"><label for="code">ID</label><input id="code" name="code" value="<%= c.code %>" <%= isNew ? '' : 'readonly' %> required placeholder="contoh C07" maxlength="20"></div>
+      <div class="field"><label for="name">Name</label><input id="name" name="name" value="<%= c.name %>" required <%= canEdit ? '' : 'readonly' %>></div>
+      <div class="field"><label for="partner_type">Type</label><select id="partner_type" name="partner_type" <%= canEdit ? '' : 'disabled' %>>
+        <option value="company" <%= c.partner_type === 'company' ? 'selected' : '' %>>Company</option>
+        <option value="person" <%= c.partner_type === 'person' ? 'selected' : '' %>>Person</option></select></div>
+      <div class="field"><label for="city">City</label><input id="city" name="city" value="<%= c.city || '' %>" <%= canEdit ? '' : 'readonly' %>></div>
+    </div>
+    <div>
+      <div class="muted small">③ Secondary fields</div>
+      <% if (kind === 'customer') { %>
+      <div class="field"><label for="credit_limit">Credit Limit</label>
+        <% if (canCredit && canEdit) { %><input id="credit_limit" name="credit_limit" value="<%= c.credit_limit %>" inputmode="numeric"><% } else { %><span data-test="credit-limit"><%= rp(c.credit_limit) %> <span class="muted small">(hanya Finance/Owner)</span></span><% } %>
+      </div>
+      <% } %>
+      <div class="field"><label for="payment_term_code">Payment Terms</label>
+        <% if (canCredit && canEdit) { %><select id="payment_term_code" name="payment_term_code"><% for (const t of terms) { %><option value="<%= t.code %>" <%= c.payment_term_code === t.code ? 'selected' : '' %>><%= t.code %> — <%= t.description %></option><% } %></select>
+        <% } else { %><span data-test="payment-terms"><%= c.payment_term_code %></span><% } %>
+      </div>
+      <% if (!isNew && c.exposure) { %>
+      <div class="callout">Credit exposure (SR-09) = AR terbuka <b><%= rp(c.exposure.ar) %></b> + SO Confirmed belum ditagih <b><%= rp(c.exposure.uninvoiced) %></b> = <b><%= rp(c.exposure.exposure) %></b> dari limit <b><%= rp(c.credit_limit) %></b>.</div>
+      <% } %>
+    </div>
+  </div>
+  <div class="muted small">④ Field: ID | Name | Type | City | Credit Limit | Payment Terms</div>
+</div>
+</form>
+<% if (chatter) { %><%- include('../partials/chatter', { chatter }) %><% } %>
+<%- include('../partials/bottom') %>

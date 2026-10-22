@@ -1,0 +1,28 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/accounting/entries">Journal Entries</a><span class="sep">/</span><span><%= e.number || 'Draft' %></span></div><div></div></div>
+<div class="formbar">
+  <div class="left">
+    <% if (e.state === 'draft' && perms['accounting.edit']) { %><form method="post" action="/accounting/entries/<%= e.id %>/post" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary">Post</button></form><% } %>
+  </div>
+  <%- include('../partials/statusbar', { stages: [['draft', 'Draft'], ['posted', 'Posted']], current: e.state }) %>
+</div>
+<div class="sheet" data-test="entry-form">
+  <div class="muted small">③ Main record</div>
+  <h1><%= e.number || 'Draft Journal Entry' %></h1>
+  <div class="subtitle"><%= e.ref || '' %></div>
+  <div class="fields"><div>
+    <div class="field"><span class="lbl">Journal</span><span><%= e.journal %> — <%= journals[e.journal] %></span></div>
+    <div class="field"><span class="lbl">Date</span><span><%= fmtDate(e.entry_date) %></span></div>
+    <div class="field"><span class="lbl">Source</span><span><%= e.source_type || '—' %> <%= e.source_id ? '#' + e.source_id : '' %></span></div>
+  </div><div>
+    <div class="muted small">③ Secondary fields</div>
+    <div class="field"><span class="lbl">Event key</span><span><code><%= e.event_key || '—' %></code></span></div>
+    <div class="field"><span class="lbl">Posted</span><span class="small"><%= e.posted_at ? (e.posted_by_name || 'system') + ' · ' + fmtDateTime(e.posted_at) : '—' %></span></div>
+  </div></div>
+  <div class="section-title">④ Table: Account | Debit | Credit</div>
+  <table class="list" data-test="entry-lines"><thead><tr><th>Account</th><th>Partner</th><th>Label</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead><tbody>
+    <% for (const l of e.lines) { %><tr><td><a href="/accounting/ledger?account=<%= l.account_code %>"><%= l.account_code %> <%= l.account_name %></a></td><td><%= l.partner_code || '' %></td><td><%= l.label || '' %></td><td class="num"><%= l.debit ? num(l.debit) : '' %></td><td class="num"><%= l.credit ? num(l.credit) : '' %></td></tr><% } %>
+  </tbody><tfoot><tr><td colspan="3">Total <%- e.total_debit === e.total_credit ? ui.badge('posted', 'Seimbang') : ui.badge('rejected', 'Tidak seimbang') %></td><td class="num"><%= num(e.total_debit) %></td><td class="num"><%= num(e.total_credit) %></td></tr></tfoot></table>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

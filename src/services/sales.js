@@ -72,7 +72,8 @@ async function getOrder(id) {
   o.revisions = await q(pool, `SELECT r.*, p.sku, u.username AS requested_by_name, d.username AS decided_by_name FROM sale_revisions r
     JOIN sale_order_lines l ON l.id = r.line_id JOIN products p ON p.id = l.product_id
     LEFT JOIN users u ON u.id = r.requested_by LEFT JOIN users d ON d.id = r.decided_by WHERE r.order_id = ? ORDER BY r.id`, [id]);
-  o.exposure = o.state !== 'cancel' ? await creditExposure(pool, o.partner_id, { excludeOrderId: o.id }) : null;
+  // Quotation: exposure tanpa pesanan ini (ditambahkan di tampilan); Sales Order: sudah termasuk pesanan ini.
+  o.exposure = o.state !== 'cancel' ? await creditExposure(pool, o.partner_id, { excludeOrderId: o.state === 'draft' ? o.id : null }) : null;
   return o;
 }
 

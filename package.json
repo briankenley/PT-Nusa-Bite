@@ -9,7 +9,8 @@
     "dev": "node --watch src/server.js",
     "db:reset": "node src/cli/reset.js",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
-    "evidence": "node e2e/evidence.js"
+    "evidence": "node e2e/evidence.js",
+    "lint": "eslint ."
   },
   "engines": {
     "node": ">=20"
@@ -23,6 +24,8 @@
     "mysql2": "^3.24.6"
   },
   "devDependencies": {
-    "playwright": "^1.56.1"
+    "eslint": "^10.1.0",
+    "playwright": "^1.56.1",
+    "qs": "^6.16.1"
   }
 }

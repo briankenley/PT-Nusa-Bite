@@ -1,0 +1,25 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/audit">Audit</a><span class="sep">/</span><span>Audit dan related documents</span></div>
+<div class="searchbar"><form method="get" style="display:flex;gap:6px"><input class="input" name="number" value="<%= number %>" style="width:140px"><button class="btn">Trace</button></form></div></div>
+<div class="content">
+<% if (!t) { %>
+  <div class="panel panel-b">Sales Order <%= number %> tidak ditemukan.</div>
+<% } else { %>
+  <div class="sheet" style="margin:0" data-test="trace">
+    <div class="muted small">③ Main record</div>
+    <h1><%= t.docs.filter((d) => ['Sales Order', 'Delivery Order', 'Customer Invoice'].includes(d.kind)).map((d) => d.number).join(' → ') %></h1>
+    <div class="subtitle"><%= t.so.partner_code %> <%= t.so.partner_name %> · <%= t.docs.map((d) => d.state).join(' → ') %></div>
+    <div class="callout">Saldo invoice tersisa: <b data-test="trace-residual"><%= rp(t.residual) %></b></div>
+    <div class="section-title">④ Related documents</div>
+    <table class="list" data-test="trace-docs"><thead><tr><th>Objek</th><th>Nomor</th><th>Status</th><th class="num">Amount</th><th class="num">Residual</th></tr></thead><tbody>
+      <% for (const d of t.docs) { %><tr><td><%= d.kind %></td><td><a href="<%= d.href %>"><%= d.number %></a></td><td><%= d.state %></td><td class="num"><%= d.amount !== undefined ? num(d.amount) : '' %></td><td class="num"><%= d.residual !== undefined ? num(d.residual) : '' %></td></tr><% } %>
+      <% for (const e of t.entries) { %><tr><td>Journal Entry (<%= e.journal %>)</td><td><a href="/accounting/entries/<%= e.id %>"><%= e.number %></a></td><td>Posted</td><td class="num"><%= num(e.total_debit) %></td><td class="muted small"><%= e.ref %></td></tr><% } %>
+    </tbody></table>
+    <div class="section-title">Table: Document | Actor | Time | Action</div>
+    <table class="list" data-test="trace-audit"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Document</th><th>Result</th><th>Detail</th></tr></thead><tbody>
+      <% for (const a of t.logs) { %><tr><td class="nowrap"><%= fmtDateTime(a.ts) %></td><td><%= a.username %> <span class="muted small"><%= a.role %></span></td><td><code><%= a.action %></code></td><td><%= a.doc_number || '' %></td><td><%- ui.badge(a.result) %></td><td class="small"><%= a.message %></td></tr><% } %>
+    </tbody></table>
+  </div>
+<% } %>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,16 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/accounting">Accounting</a><span class="sep">/</span><span>General Ledger</span></div>
+<div class="searchbar"><form method="get" style="display:flex;gap:6px">
+  <select name="account" class="input" style="width:auto"><% for (const a of accounts) { %><option value="<%= a.code %>" <%= a.code === code ? 'selected' : '' %>><%= a.code %> <%= a.name %></option><% } %></select>
+  <select name="partner" class="input" style="width:auto"><option value="">Semua partner</option><% for (const p of partners) { %><option value="<%= p.id %>" <%= String(partner) === String(p.id) ? 'selected' : '' %>><%= p.code %> <%= p.name %></option><% } %></select>
+  <button class="btn">Tampilkan</button></form></div></div>
+<div class="content">
+  <div class="panel">
+    <div class="panel-h"><span><%= data.account.code %> — <%= data.account.name %> (<%= data.account.account_type %>)</span><span>Saldo (Dr − Cr): <b data-test="ledger-balance"><%= rp(data.balance) %></b></span></div>
+    <table class="list"><thead><tr><th>Date</th><th>Entry</th><th>Journal</th><th>Partner</th><th>Label</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Running Balance</th></tr></thead><tbody>
+      <% for (const l of data.lines) { %><tr class="click" onclick="location.href='/accounting/entries/<%= l.entry_id %>'"><td><%= fmtDate(l.entry_date) %></td><td><a href="/accounting/entries/<%= l.entry_id %>"><%= l.number %></a></td><td><%= l.journal %></td><td><%= l.partner_code || '' %></td><td><%= l.label || l.ref %></td><td class="num"><%= l.debit ? num(l.debit) : '' %></td><td class="num"><%= l.credit ? num(l.credit) : '' %></td><td class="num"><%= num(l.running) %></td></tr><% } %>
+      <% if (!data.lines.length) { %><tr><td colspan="8" class="muted">Belum ada mutasi.</td></tr><% } %>
+    </tbody></table>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

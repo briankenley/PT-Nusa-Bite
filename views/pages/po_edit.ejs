@@ -1,0 +1,29 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/purchase/orders">RFQ &amp; Purchase Orders</a><span class="sep">/</span><span><%= order ? order.number : 'New' %></span></div><div></div></div>
+<form method="post" action="<%= order ? '/purchase/orders/' + order.id + '/edit' : '/purchase/orders/new' %>">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<div class="formbar"><div class="left"><button class="btn btn-primary" data-test="save-rfq">Save</button><a class="btn" href="<%= order ? '/purchase/orders/' + order.id : '/purchase/orders' %>">Discard</a></div>
+  <span class="statusbar"><span class="on">RFQ</span><span>Purchase Order</span></span></div>
+<div class="sheet" data-test="po-edit">
+  <div class="muted small">③ Main record</div>
+  <h1><%= order ? order.number : 'New RFQ' %></h1>
+  <div class="fields"><div>
+    <div class="field"><label for="ref">Order Reference</label><input id="ref" value="<%= order ? order.number : 'otomatis dari sequence (PO000xx)' %>" readonly data-test="po-number"></div>
+    <div class="field"><label for="partner_id">Vendor</label><select id="partner_id" name="partner_id" required <%= order ? 'disabled' : '' %>><option value="">— pilih vendor —</option>
+      <% for (const v of vendors) { %><option value="<%= v.id %>" <%= order && order.partner_id === v.id ? 'selected' : '' %>><%= v.code %> — <%= v.name %> (<%= v.payment_term_code %>)</option><% } %></select></div>
+  </div><div>
+    <div class="field"><span class="lbl">Deliver To</span><span>WH-PKU — Gudang Pekanbaru</span></div>
+    <div class="field"><label for="note">Note</label><input id="note" name="note" value="<%= order ? order.note || '' : '' %>"></div>
+    <div class="callout small">Harga default dari vendor pricelist. Pajak pembelian dataset: PUR0 0%.</div>
+  </div></div>
+  <% if (order) { %>
+  <details class="no-print" style="margin-bottom:10px"><summary class="muted small">Uji kontrol SR-12: coba timpa nomor dokumen</summary>
+    <div class="field" style="margin-top:6px"><label for="number">Nomor baru</label><input id="number" name="number" value="<%= order.number %>" data-test="override-number"></div>
+    <div class="muted small">Nomor berasal dari sequence; server menolak nomor lain dan mencatat upaya di audit log.</div>
+  </details>
+  <% } %>
+  <div class="section-title">④ Lines</div>
+  <%- include('../partials/lines_editor', { products, lines, showDiscount: false, priceLabel: 'Unit Price', taxRate: 0 }) %>
+</div>
+</form>
+<%- include('../partials/bottom') %>

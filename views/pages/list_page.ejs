@@ -1,0 +1,12 @@
+<%- include('../partials/top', { title }) %>
+<%- include('../partials/control_panel', { cp }) %>
+<div class="content">
+  <% if (typeof intro !== 'undefined' && intro) { %><div class="callout"><%- intro %></div><% } %>
+  <% if (cp.list.view === 'kanban' && typeof card !== 'undefined') { %>
+    <%- include('../partials/kanban', { list: cp.list, card, href }) %>
+  <% } else { %>
+    <%- include('../partials/list', { list: cp.list, columns, href: typeof href !== 'undefined' ? href : null }) %>
+  <% } %>
+  <% if (typeof outro !== 'undefined' && outro) { %><div style="margin-top:12px"><%- outro %></div><% } %>
+</div>
+<%- include('../partials/bottom') %>

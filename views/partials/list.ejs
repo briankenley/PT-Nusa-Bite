@@ -1,0 +1,22 @@
+<%# list (buildList), columns [{label, value(r), html(r), cls, sum}], href(r) %>
+<% const cols = columns; const sums = (rows) => cols.map((c) => (c.sum ? rows.reduce((s, r) => s + Number(c.sum === true ? c.value(r) : c.sum(r)) || 0, 0) : null)); %>
+<% const cell = (c, r) => (c.html ? c.html(r) : ui.escapeHtml(c.value(r))); %>
+<div class="list-wrap">
+<table class="list" data-test="list">
+  <thead><tr><% for (const c of cols) { %><th class="<%= c.cls || '' %>"><%= c.label %></th><% } %></tr></thead>
+  <tbody>
+  <% const renderRows = (rows) => { for (const r of rows) { const h = href ? href(r) : null; %>
+    <tr class="<%= h ? 'click' : '' %>" <% if (h) { %>onclick="location.href='<%= h %>'"<% } %>>
+      <% cols.forEach((c, i) => { %><td class="<%= c.cls || '' %>"><% if (i === 0 && h) { %><a href="<%= h %>"><%- cell(c, r) %></a><% } else { %><%- cell(c, r) %><% } %></td><% }) %>
+    </tr>
+  <% } }; %>
+  <% if (list.groups) { for (const g of list.groups) { const s = sums(g.rows); %>
+    <tr class="group"><td colspan="1">▾ <%= g.label %> (<%= g.rows.length %>)</td><% for (let i = 1; i < cols.length; i++) { %><td class="<%= cols[i].cls || '' %>"><%= s[i] !== null ? (cols[i].fmt === 'money' ? rp(s[i]) : num(s[i])) : '' %></td><% } %></tr>
+    <% renderRows(g.rows); } } else { renderRows(list.rows); } %>
+  <% if (!list.rows.length) { %><tr><td colspan="<%= cols.length %>" class="muted">Tidak ada data.</td></tr><% } %>
+  </tbody>
+  <% if (cols.some((c) => c.sum) && list.rows.length) { const s = sums(list.rows); %>
+  <tfoot><tr><% cols.forEach((c, i) => { %><td class="<%= c.cls || '' %>"><%= i === 0 ? 'Total' : s[i] !== null ? (c.fmt === 'money' ? rp(s[i]) : num(s[i])) : '' %></td><% }) %></tr></tfoot>
+  <% } %>
+</table>
+</div>

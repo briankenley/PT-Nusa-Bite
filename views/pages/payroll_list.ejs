@@ -1,0 +1,26 @@
+<%- include('../partials/top', { title }) %>
+<%- include('../partials/control_panel', { cp: { crumbs: [{ label: 'Employees + Accounting' }, { label: 'Payroll Simulation' }], list } }) %>
+<div class="content">
+  <div class="callout">Simulasi payroll adalah kemampuan lintas <b>Employees</b> dan <b>Accounting</b> (bukan aplikasi Payroll terpisah). Alur: Employee → Attendance days → Payslip → Salary Journal → Bank Payment.
+    Kebijakan aktif: <b><%= policy === 'proportional' ? 'gaji pokok × hari hadir ÷ 22, tunjangan penuh jika hadir ≥ 1 hari (SR-17, keputusan D-05)' : 'gaji pokok penuh (SR-16)' %></b>. Tanpa PPh 21, BPJS, lembur, atau potongan lain.</div>
+  <% if (perms['payroll.prepare']) { %>
+  <form method="post" action="/payroll/generate" class="panel panel-b" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Periode<br><input name="period" value="<%= period %>" class="input-sm" style="width:100px" data-test="period"></label>
+    <label>Karyawan<br><select name="employee_id" class="input" style="width:auto" data-test="employee"><option value="">Semua karyawan Active</option><% for (const e of employees) { %><option value="<%= e.id %>"><%= e.code %> — <%= e.name %></option><% } %></select></label>
+    <button class="btn btn-primary" data-test="generate">Generate Payslip</button>
+    <span class="muted small">Satu payslip per karyawan per periode (SR-12).</span>
+  </form>
+  <% } %>
+  <%- include('../partials/list', { list, columns: [
+    { label: 'Payslip', value: (r) => r.number },
+    { label: 'Employee', value: (r) => r.employee_code + ' ' + r.employee_name },
+    { label: 'Period', value: (r) => r.period },
+    { label: 'Hadir/Rencana', value: (r) => r.attended_days + '/' + r.planned_days, cls: 'num' },
+    { label: 'Base Paid', value: (r) => r.base_paid, html: (r) => rp(r.base_paid), cls: 'num', sum: true, fmt: 'money' },
+    { label: 'Allowance', value: (r) => r.allowance_paid, html: (r) => rp(r.allowance_paid), cls: 'num', sum: true, fmt: 'money' },
+    { label: 'Gross = Net', value: (r) => r.gross, html: (r) => rp(r.gross), cls: 'num', sum: true, fmt: 'money' },
+    { label: 'Status', html: (r) => ui.badge(r.state) },
+  ], href: (r) => '/payroll/' + r.id }) %>
+</div>
+<%- include('../partials/bottom') %>

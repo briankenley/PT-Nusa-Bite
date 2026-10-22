@@ -1,0 +1,38 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/employees">Employees</a><span class="sep">/</span><span><%= isNew ? 'New' : e.code + ' · ' + e.name %></span></div><div></div></div>
+<form method="post" action="<%= isNew ? '/employees/new' : '/employees/' + e.id %>">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<div class="formbar">
+  <div class="left"><% if (canEdit) { %><button class="btn btn-primary" data-test="save-employee">Save</button><% } else { %><span class="muted">Read-only: hanya HR/Owner yang dapat mengubah data dan tarif gaji (SR-13)</span><% } %><a class="btn" href="/employees">Discard</a></div>
+  <span class="statusbar"><span class="<%= e.status === 'active' ? 'on' : '' %>">Active</span><span class="<%= e.status === 'inactive' ? 'on' : '' %>">Inactive</span></span>
+</div>
+<div class="sheet" data-test="employee-form">
+  <% if (!isNew) { %><%- include('../partials/smart', { buttons: [{ label: 'Payslips', count: e.payslips.length, href: '/payroll?q=' + e.code }, { label: 'Riwayat perubahan', count: e.history.length }] }) %><% } %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= isNew ? 'New Employee' : e.code + ' · ' + e.name %></h1>
+  <div class="fields"><div>
+    <div class="field"><label for="code">Employee ID</label><input id="code" name="code" value="<%= e.code %>" <%= isNew ? '' : 'readonly' %> required placeholder="E07"></div>
+    <div class="field"><label for="name">Name</label><input id="name" name="name" value="<%= e.name %>" <%= canEdit ? '' : 'readonly' %> required></div>
+    <div class="field"><label for="job_title">Role / Job Title</label><input id="job_title" name="job_title" value="<%= e.job_title %>" <%= canEdit ? '' : 'readonly' %> required></div>
+    <div class="field"><label for="location_id">Work Unit</label><select id="location_id" name="location_id" <%= canEdit ? '' : 'disabled' %>><% for (const l of locations) { %><option value="<%= l.id %>" <%= String(e.location_id) === String(l.id) ? 'selected' : '' %>><%= l.code %> — <%= l.name %></option><% } %></select></div>
+    <div class="field"><label for="start_date">Start Date</label><input id="start_date" name="start_date" type="date" value="<%= String(e.start_date || '').slice(0, 10) %>" <%= canEdit ? '' : 'readonly' %>></div>
+    <div class="field"><label for="status">Status</label><select id="status" name="status" <%= canEdit ? '' : 'disabled' %>><option value="active" <%= e.status === 'active' ? 'selected' : '' %>>Active</option><option value="inactive" <%= e.status === 'inactive' ? 'selected' : '' %>>Inactive</option></select></div>
+  </div><div>
+    <div class="muted small">③ Secondary fields — tarif upah</div>
+    <div class="field"><label for="base_salary">Base Salary</label><input id="base_salary" name="base_salary" value="<%= e.base_salary %>" <%= canEdit ? '' : 'readonly' %> inputmode="numeric" data-test="base-salary"></div>
+    <div class="field"><label for="fixed_allowance">Fixed Allowance</label><input id="fixed_allowance" name="fixed_allowance" value="<%= e.fixed_allowance %>" <%= canEdit ? '' : 'readonly' %> inputmode="numeric"></div>
+    <div class="field"><label for="planned_days">Planned Days</label><input id="planned_days" name="planned_days" value="<%= e.planned_days %>" <%= canEdit ? '' : 'readonly' %>></div>
+    <div class="field"><label for="attended_days">Attended Days (fixture)</label><input id="attended_days" name="attended_days" value="<%= e.attended_days %>" <%= canEdit ? '' : 'readonly' %>></div>
+    <div class="callout small">Employee ID unik dan tidak dapat diubah; unit kerja, jabatan, status, tanggal mulai, dan tarif gaji disimpan dengan riwayat perubahan (SR-15).</div>
+  </div></div>
+  <% if (!isNew) { %>
+  <div class="section-title">④ Riwayat perubahan</div>
+  <table class="list" data-test="employee-history"><thead><tr><th>Waktu</th><th>Oleh</th><th>Field</th><th>Lama</th><th>Baru</th></tr></thead><tbody>
+    <% for (const h of e.history) { %><tr><td><%= fmtDateTime(h.changed_at) %></td><td><%= h.changed_by_name %></td><td><%= h.field %></td><td><%= h.old_value %></td><td><%= h.new_value %></td></tr><% } %>
+    <% if (!e.history.length) { %><tr><td colspan="5" class="muted">Belum ada perubahan sejak baseline.</td></tr><% } %>
+  </tbody></table>
+  <% } %>
+</div>
+</form>
+<% if (chatter) { %><%- include('../partials/chatter', { chatter }) %><% } %>
+<%- include('../partials/bottom') %>

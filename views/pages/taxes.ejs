@@ -1,0 +1,10 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/accounting">Accounting</a><span class="sep">/</span><span>Taxes &amp; Payment Terms</span></div><div></div></div>
+<div class="content">
+  <div class="panel"><div class="panel-h">tax_rates</div><table class="list"><thead><tr><th>ID</th><th>Tax name</th><th class="num">Rate</th><th>Base</th><th>Usage</th></tr></thead><tbody>
+    <% for (const t of taxes) { %><tr><td><%= t.code %></td><td><%= t.name %></td><td class="num"><%= t.rate_pct %>%</td><td><%= t.base %></td><td><%= t.usage_note %></td></tr><% } %></tbody></table></div>
+  <div class="panel"><div class="panel-h">payment_terms</div><table class="list"><thead><tr><th>Code</th><th>Description</th><th class="num">Due days</th></tr></thead><tbody>
+    <% for (const t of terms) { %><tr><td><%= t.code %></td><td><%= t.description %></td><td class="num"><%= t.due_days %></td></tr><% } %></tbody></table></div>
+  <div class="callout small">Asumsi latihan: penjualan makanan/minuman restoran di Pekanbaru dikenai PBJT Makanan dan Minuman 10% (Perda Kota Pekanbaru No. 1/2024), bukan PPN. Pajak dibulatkan ke Rupiah terdekat per baris. Vendor bill memakai 0% sebagai penyederhanaan dataset.</div>
+</div>
+<%- include('../partials/bottom') %>

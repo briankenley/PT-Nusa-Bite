@@ -1,0 +1,4 @@
+<%# stages: [[key, label]], current %>
+<span class="statusbar" title="② Status / tahap">
+<% const idx = stages.findIndex(([k]) => k === current); stages.forEach(([k, label], i) => { %><span class="<%= i === idx ? 'on' : i < idx ? 'past' : '' %>"><%= label %></span><% }) %>
+</span>

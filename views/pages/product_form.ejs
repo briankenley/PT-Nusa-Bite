@@ -1,0 +1,52 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/products">Products</a><span class="sep">/</span><span><%= isNew ? 'New' : p.sku + ' — ' + p.name %></span></div><div></div></div>
+<form method="post" action="<%= isNew ? '/products/new' : '/products/' + p.id %>">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<div class="formbar">
+  <div class="left">
+    <% if (canEdit) { %><button class="btn btn-primary" type="submit" data-test="save"><%= isNew ? 'Save' : 'Save changes' %></button><% } else { %><span class="muted">Read-only untuk peran <%= roleLabel %></span><% } %>
+    <a class="btn" href="/products">Discard</a>
+  </div>
+  <span class="statusbar"><span class="on">Variant SKU</span></span>
+</div>
+<div class="sheet" data-test="product-form">
+  <% if (!isNew) { const total = p.quants.reduce((s, q) => s + q.on_hand, 0); %>
+  <%- include('../partials/smart', { buttons: [
+    { label: 'On Hand (semua lokasi)', value: total },
+    { label: 'Reserved', value: p.quants.reduce((s, q) => s + q.reserved, 0) },
+    { label: 'Nilai stok', value: rp(total * p.standard_cost) },
+    { label: 'Moves', count: p.moves.length, href: '/inventory/moves?q=' + p.sku },
+  ] }) %>
+  <% } %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= isNew ? 'New Variant SKU' : p.sku + ' — ' + p.name %></h1>
+  <div class="fields">
+    <div>
+      <div class="field"><label for="sku">Variant SKU</label><input id="sku" name="sku" value="<%= p.sku %>" <%= isNew ? '' : 'readonly' %> required></div>
+      <div class="field"><label for="name">Name</label><input id="name" name="name" value="<%= p.name %>" required <%= canEdit ? '' : 'readonly' %>></div>
+      <div class="field"><label for="size">Size</label><input id="size" name="size" value="<%= p.size %>" required <%= canEdit ? '' : 'readonly' %>></div>
+      <div class="field"><label for="color">Color</label><input id="color" name="color" value="<%= p.color %>" required <%= canEdit ? '' : 'readonly' %>></div>
+      <div class="field"><label for="uom">Unit</label><input id="uom" name="uom" value="<%= p.uom %>" required <%= canEdit ? '' : 'readonly' %>></div>
+    </div>
+    <div>
+      <div class="muted small">③ Secondary fields</div>
+      <div class="field"><label for="sales_price">Sales Price</label><% if (canPrice) { %><input id="sales_price" name="sales_price" value="<%= p.sales_price %>" inputmode="numeric"><% } else { %><span data-test="sales-price"><%= rp(p.sales_price) %></span><% } %></div>
+      <div class="field"><label for="standard_cost">Standard Cost</label><% if (canPrice) { %><input id="standard_cost" name="standard_cost" value="<%= p.standard_cost %>" inputmode="numeric"><% } else { %><span data-test="standard-cost"><%= rp(p.standard_cost) %></span><% } %></div>
+      <div class="field"><label for="default_vendor_id">Default Vendor</label><select id="default_vendor_id" name="default_vendor_id" <%= canEdit ? '' : 'disabled' %>><option value="">—</option><% for (const v of vendors) { %><option value="<%= v.id %>" <%= String(p.default_vendor_id) === String(v.id) ? 'selected' : '' %>><%= v.code %> — <%= v.name %></option><% } %></select></div>
+      <div class="callout small">Harga jual <b>tidak termasuk</b> PBJT 10%. Nilai persediaan memakai standard cost. Perubahan harga/cost hanya oleh Finance/Owner (SR-13).</div>
+    </div>
+  </div>
+  <% if (!isNew) { %>
+  <div class="section-title">④ Table — Stok per lokasi</div>
+  <table class="list"><thead><tr><th>Location</th><th class="num">On Hand</th><th class="num">Reserved</th><th class="num">Available</th><th class="num">Standard Value</th></tr></thead><tbody>
+    <% for (const q of p.quants) { %><tr><td><%= q.location_code %> — <%= q.location_name %></td><td class="num"><%= q.on_hand %></td><td class="num"><%= q.reserved %></td><td class="num"><b><%= q.available %></b></td><td class="num"><%= rp(q.on_hand * p.standard_cost) %></td></tr><% } %>
+  </tbody></table>
+  <div class="section-title">Vendor Pricelist</div>
+  <table class="list"><thead><tr><th>Vendor</th><th>Unit</th><th class="num">Unit Price</th><th class="num">Min Qty</th></tr></thead><tbody>
+    <% for (const v of p.pricelist) { %><tr><td><%= v.vendor_code %> — <%= v.vendor_name %></td><td><%= v.uom %></td><td class="num"><%= rp(v.unit_price) %></td><td class="num"><%= v.min_qty %></td></tr><% } %>
+  </tbody></table>
+  <% } %>
+</div>
+</form>
+<% if (chatter) { %><%- include('../partials/chatter', { chatter }) %><% } %>
+<%- include('../partials/bottom') %>

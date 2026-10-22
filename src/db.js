@@ -50,8 +50,13 @@ async function closePool() {
   }
 }
 
-/** Jalankan fn(conn) dalam satu transaksi; rollback otomatis bila error. */
-async function tx(fn) {
+const RETRYABLE = new Set(['ER_LOCK_DEADLOCK', 'ER_LOCK_WAIT_TIMEOUT']);
+
+/**
+ * Jalankan fn(conn) dalam satu transaksi; rollback otomatis bila error.
+ * Deadlock antar transaksi bersamaan diulang otomatis (maks. 3 kali) agar tidak muncul sebagai error server.
+ */
+async function tx(fn, attempt = 1) {
   const conn = await getPool().getConnection();
   try {
     await conn.beginTransaction();
@@ -60,10 +65,12 @@ async function tx(fn) {
     return result;
   } catch (err) {
     try { await conn.rollback(); } catch (_) { /* koneksi mungkin sudah putus */ }
-    throw err;
+    if (!RETRYABLE.has(err.code) || attempt >= 3) throw err;
   } finally {
     conn.release();
   }
+  await new Promise((r) => setTimeout(r, 25 * attempt));
+  return tx(fn, attempt + 1);
 }
 
 async function query(sql, params = []) {

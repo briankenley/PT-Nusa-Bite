@@ -1,0 +1,24 @@
+<%- include('../partials/top', { title: 'Settings' }) %>
+<div class="cp"><div class="crumbs"><span>Settings · Users &amp; Roles</span></div><div></div></div>
+<div class="content">
+  <div class="panel">
+    <div class="panel-h">Akun uji per peran (SR-13)</div>
+    <table class="list"><thead><tr><th>Username</th><th>Nama</th><th>Peran</th><th>Hak utama</th></tr></thead><tbody>
+      <% for (const u of users) { %><tr><td><code><%= u.username %></code></td><td><%= u.full_name %></td><td><%= u.role %></td><td class="small"><%= rights[u.role] %></td></tr><% } %>
+    </tbody></table>
+  </div>
+  <div class="panel" id="reset">
+    <div class="panel-h">Reset Baseline Seed</div>
+    <div class="panel-b">
+      <p>Memulihkan seluruh data ke baseline Bagian 4 handout (773 unit / Rp5.422.000; saldo pembuka Rp43.722.000; S00007, PO00007, L00007). Dipakai sebelum tiap tes independen. <b>Semua transaksi uji akan terhapus.</b></p>
+      <p class="muted small">Baseline terakhir: <%= fmtDateTime(baselineAt) %></p>
+      <% if (allowReset) { %>
+      <form method="post" action="/settings/reset" class="inline">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <button class="btn btn-danger" data-confirm="Hapus semua transaksi uji dan pulihkan baseline seed?">Reset ke baseline</button>
+      </form>
+      <% } else { %><p class="muted">Reset dinonaktifkan (ALLOW_RESET=false).</p><% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

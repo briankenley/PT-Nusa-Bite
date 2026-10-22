@@ -1,0 +1,30 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/crm">CRM pipeline</a><span class="sep">/</span><span><%= o.number %></span></div><div></div></div>
+<div class="formbar">
+  <div class="left">
+    <% if (perms['sales.edit'] && o.partner_id) { %><a class="btn btn-primary" href="/sales/orders/new?opportunity_id=<%= o.id %>&partner_id=<%= o.partner_id %>">New Quotation</a><% } %>
+    <% if (perms['crm.edit']) { for (const [k, label] of stages) { if (k === o.stage) continue; %>
+      <form method="post" action="/crm/opportunities/<%= o.id %>/stage" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="stage" value="<%= k %>"><button class="btn btn-sm">→ <%= label %></button></form>
+    <% } } %>
+  </div>
+  <%- include('../partials/statusbar', { stages, current: o.stage }) %>
+</div>
+<div class="sheet" data-test="opportunity-form">
+  <%- include('../partials/smart', { buttons: [{ label: 'Lead asal', value: o.lead_number, href: '/crm/leads/' + o.lead_id }, { label: 'Quotations / SO', count: o.orders.length }] }) %>
+  <div class="muted small">③ Main record</div>
+  <h1><%= o.number %> — <%= o.name %></h1>
+  <div class="fields"><div>
+    <div class="field"><span class="lbl">Customer</span><span><%= o.partner_code %> — <%= o.partner_name %></span></div>
+    <div class="field"><span class="lbl">Lead</span><span><a href="/crm/leads/<%= o.lead_id %>"><%= o.lead_number %></a></span></div>
+  </div><div>
+    <div class="field"><span class="lbl">Stage</span><span><%- ui.badge(o.stage) %></span></div>
+    <div class="field"><span class="lbl">Expected Revenue</span><span><%= rp(o.expected_revenue) %></span></div>
+  </div></div>
+  <div class="section-title">④ Quotations / Sales Orders</div>
+  <table class="list"><thead><tr><th>Number</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>
+    <% for (const s of o.orders) { %><tr><td><a href="/sales/orders/<%= s.id %>"><%= s.number %></a></td><td><%- ui.badge(s.state === 'draft' ? 'draft' : s.state, s.state === 'draft' ? 'Quotation' : null) %></td><td class="num"><%= rp(s.amount_total) %></td></tr><% } %>
+    <% if (!o.orders.length) { %><tr><td colspan="3" class="muted">Belum ada quotation.</td></tr><% } %>
+  </tbody></table>
+</div>
+<%- include('../partials/chatter', { chatter }) %>
+<%- include('../partials/bottom') %>

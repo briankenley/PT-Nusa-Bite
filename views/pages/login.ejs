@@ -1,0 +1,27 @@
+<%- include('../partials/top', { title: 'Login' }) %>
+<div class="login-wrap">
+  <div class="login">
+    <h1>NusaBite ERP</h1>
+    <div class="muted">PT NusaBite Cepat Saji · Pekanbaru · IDR</div>
+    <form method="post" action="/login">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="next" value="<%= next %>">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required value="<%= username || '' %>">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit">Log in</button>
+    </form>
+    <% if (demoAccounts) { %>
+    <div class="demo">
+      <b>Akun uji (password: <code><%= demoPassword %></code>)</b>
+      <table>
+        <% for (const [u, r, d] of demoAccounts) { %>
+        <tr><td><code><%= u %></code></td><td><%= r %></td><td class="muted"><%= d %></td></tr>
+        <% } %>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

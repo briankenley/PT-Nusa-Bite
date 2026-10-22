@@ -1,0 +1,43 @@
+<%- include('../partials/top', { title }) %>
+<div class="cp"><div class="crumbs"><span class="muted small">①</span><a href="/sales/orders">Quotations &amp; Orders</a><span class="sep">/</span><span><%= order ? order.number : 'New' %></span></div><div></div></div>
+<form method="post" action="<%= order ? '/sales/orders/' + order.id + '/edit' : '/sales/orders/new' %>">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<input type="hidden" name="opportunity_id" value="<%= opportunityId %>">
+<div class="formbar">
+  <div class="left"><button class="btn btn-primary" type="submit" data-test="save-quotation">Save</button><a class="btn" href="<%= order ? '/sales/orders/' + order.id : '/sales/orders' %>">Discard</a></div>
+  <span class="statusbar"><span class="<%= !order || order.state === 'draft' ? 'on' : 'past' %>">Draft (Quotation)</span><span class="<%= order && order.state === 'sale' ? 'on' : '' %>">Confirmed (Sales Order)</span></span>
+</div>
+<% if (locked) { %>
+<div class="flash flash-error"><strong>Terkunci:</strong><span><%= order.number %> sudah Confirmed. Harga, pajak, SKU, dan diskon terkunci; server akan menolak perubahan langsung dan mencatatnya di audit. Gunakan <a href="/sales/orders/<%= order.id %>#revision">Revisi</a> (persetujuan Owner).</span><span class="rule">SR-08</span></div>
+<% } %>
+<div class="sheet" data-test="so-edit">
+  <div class="muted small">③ Main record</div>
+  <h1><%= order ? order.number : 'New Quotation' %></h1>
+  <div class="fields">
+    <div>
+      <div class="field"><label for="partner_id">Customer</label>
+        <select id="partner_id" name="partner_id" required <%= order ? 'disabled' : '' %>>
+          <option value="">— pilih pelanggan —</option>
+          <% for (const c of customers) { %><option value="<%= c.id %>" <%= String(partnerId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.name %> (limit <%= rp(c.credit_limit) %>, <%= c.payment_term_code %>)</option><% } %>
+        </select>
+        <% if (order) { %><input type="hidden" name="partner_id" value="<%= order.partner_id %>"><% } %>
+      </div>
+      <div class="field"><label for="location_code">Ship From</label>
+        <select id="location_code" name="location_code" <%= order ? 'disabled' : '' %>>
+          <option value="OUTLET-SUD" <%= !order || order.location_code === 'OUTLET-SUD' ? 'selected' : '' %>>OUTLET-SUD — Outlet Sudirman</option>
+          <option value="WH-PKU" <%= order && order.location_code === 'WH-PKU' ? 'selected' : '' %>>WH-PKU — Gudang Pekanbaru</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <div class="muted small">③ Secondary fields</div>
+      <div class="field"><span class="lbl">Tax</span><span>PBJT Makanan dan Minuman 10% (per baris, dibulatkan)</span></div>
+      <div class="field"><label for="note">Note</label><input id="note" name="note" value="<%= order ? order.note || '' : '' %>"></div>
+    </div>
+  </div>
+  <div class="callout small">Diskon efektif 0–<%= maxDiscount %>% boleh diberikan Sales. Di atas <%= maxDiscount %>% (termasuk menurunkan harga satuan) memerlukan persetujuan Owner sebelum konfirmasi (SR-07).</div>
+  <div class="section-title">④ Lines</div>
+  <%- include('../partials/lines_editor', { products, lines, showDiscount: true, priceLabel: 'Unit Price', taxRate: 10 }) %>
+</div>
+</form>
+<%- include('../partials/bottom') %>
