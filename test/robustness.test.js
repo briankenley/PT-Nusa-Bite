@@ -72,3 +72,15 @@ test('PBJT dibulatkan per baris: 10% × harga setelah diskon × kuantitas', () =
   // 7.000 × 3 × 97,5% = 20.475 → pajak 2.047,5 dibulatkan ke 2.048
   assert.deepEqual(computeLine({ unitPrice: 7000, qty: 3, discountPct: 2.5, taxRatePct: 10 }), { subtotal: 20475, tax: 2048, total: 22523 });
 });
+
+test('F-23 (optional): saran pembelian = rerata 7 hari × cakupan − Available − incoming', async () => {
+  const counter = require('../src/services/counter');
+  const reorder = require('../src/services/reorder');
+  await counter.checkout(await h.ctx('cashier'), { lines: [{ productId: await h.productId('NUG-6'), qty: 10 }] });
+  const rows = await reorder.suggestions({ coverDays: 30 });
+  const nug = rows.find((r) => r.sku === 'NUG-6');
+  // terjual 10 → rerata 1,43/hari → target ceil(1,43 × 30) = 43; Available 32 + 4 = 36; incoming 0 → saran 7
+  assert.deepEqual([nug.net, nug.avg, nug.target, nug.available, nug.suggest], [10, 1.43, 43, 36, 7]);
+  const fry = rows.find((r) => r.sku === 'FRY-SML');
+  assert.equal(fry.incoming, 20); // PO00007 belum diterima dihitung sebagai barang dalam perjalanan
+});

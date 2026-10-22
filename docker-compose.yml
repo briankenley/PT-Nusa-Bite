@@ -1,0 +1,31 @@
+# Jalankan lokal tanpa memasang MySQL: `docker compose up --build` lalu buka http://localhost:3000
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: nusabite
+      MYSQL_USER: nusabite
+      MYSQL_PASSWORD: nusabite
+      MYSQL_ROOT_PASSWORD: rootpass
+    command: ["--sql-require-primary-key=ON"]
+    ports: ["3306:3306"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-unusabite", "-pnusabite"]
+      interval: 5s
+      retries: 20
+    volumes: ["dbdata:/var/lib/mysql"]
+  app:
+    build: .
+    environment:
+      DB_HOST: db
+      DB_USER: nusabite
+      DB_PASSWORD: nusabite
+      DB_NAME: nusabite
+      SESSION_SECRET: local-docker-secret
+      PORT: 3000
+    ports: ["3000:3000"]
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  dbdata:

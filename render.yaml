@@ -1,0 +1,25 @@
+# Render Blueprint — web service gratis untuk NusaBite ERP.
+# Database MySQL berada di luar Render (mis. Aiven for MySQL Free). Lihat docs/DEPLOYMENT.md.
+services:
+  - type: web
+    name: nusabite-erp
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_CA
+        sync: false
+      - key: DEMO_PASSWORD
+        value: demo1234
+      - key: ALLOW_RESET
+        value: "true"

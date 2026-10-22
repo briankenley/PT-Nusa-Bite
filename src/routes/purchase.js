@@ -5,6 +5,7 @@ const { can } = require('../lib/acl');
 const { buildList } = require('../lib/listview');
 const { rp } = require('../lib/money');
 const purchase = require('../services/purchase');
+const reorder = require('../services/reorder');
 const { loadChatter } = require('./_chatter');
 
 async function editorProducts() {
@@ -53,7 +54,38 @@ module.exports = (app) => {
 
   app.get('/purchase/orders/new', ui.need('purchase.edit'), async (req, res) => {
     res.locals.setApp('purchase');
-    res.render('pages/po_edit', { title: 'New RFQ', order: null, vendors: await vendors(), products: await editorProducts(), lines: [] });
+    // Prefill dari saran pembelian F-23: ?vendor=ID&p=ID:qty&p=ID:qty
+    const pre = [].concat(req.query.p || []).map((x) => String(x).split(':')).filter(([id, qty]) => Number(id) && Number(qty) > 0)
+      .map(([id, qty]) => ({ product_id: Number(id), qty: Number(qty) }));
+    res.render('pages/po_edit', { title: 'New RFQ', order: null, vendors: await vendors(), products: await editorProducts(), lines: pre, vendorId: Number(req.query.vendor) || null });
+  });
+
+  app.get('/purchase/reorder', ui.need('purchase.view'), async (req, res) => {
+    res.locals.setApp('purchase');
+    const cover = Math.min(30, Math.max(1, Number(req.query.cover) || 7));
+    const rows = await reorder.suggestions({ coverDays: cover });
+    const list = buildList(req, rows, {
+      search: ['sku', 'name', 'vendor_code'],
+      filters: [{ key: 'need', label: 'Perlu dipesan', test: (r) => r.suggest > 0 }],
+      groupBys: [{ key: 'vendor', label: 'Vendor', value: (r) => `${r.vendor_code} ${r.vendor_name}` }],
+      defaultGroupBy: 'vendor',
+    });
+    const byVendor = {};
+    for (const r of rows.filter((x) => x.suggest > 0)) (byVendor[r.vendor_id] = byVendor[r.vendor_id] || { code: r.vendor_code, items: [] }).items.push(`p=${r.id}:${r.suggest}`);
+    const links = Object.entries(byVendor).map(([vid, v]) => `<a class="btn btn-sm" href="/purchase/orders/new?vendor=${vid}&${v.items.join('&')}">Buat RFQ ${v.code}</a>`).join(' ');
+    res.render('pages/list_page', {
+      title: 'Reorder Suggestions',
+      cp: { crumbs: [{ label: 'Purchase', href: '/purchase/orders' }, { label: 'Saran Pembelian (F-23, optional)' }], list, actions: can(req.user.role, 'purchase.edit') ? links : '' },
+      intro: `Rerata harian = unit terkirim 7 hari terakhir (neto retur) ÷ 7. Saran = rerata × <b>${cover} hari cakupan</b> − Available − barang dalam perjalanan. Ubah cakupan: <a href="?cover=3">3</a> · <a href="?cover=7">7</a> · <a href="?cover=14">14</a> hari. Fitur opsional; tidak menggantikan fitur Must.`,
+      columns: [
+        { label: 'SKU', value: (r) => r.sku }, { label: 'Product', value: (r) => `${r.name} ${r.size}` },
+        { label: 'Terjual 7 hari', value: (r) => r.net, cls: 'num' }, { label: 'Rerata/hari', value: (r) => r.avg, cls: 'num' },
+        { label: 'Available', value: (r) => r.available, cls: 'num' }, { label: 'Incoming', value: (r) => r.incoming, cls: 'num' },
+        { label: 'Saran beli', value: (r) => r.suggest, cls: 'num', sum: true },
+        { label: 'Estimasi biaya', value: (r) => r.suggest * r.standard_cost, html: (r) => rp(r.suggest * r.standard_cost), cls: 'num', sum: true, fmt: 'money' },
+      ],
+      href: (r) => `/products/${r.id}`,
+    });
   });
 
   app.post('/purchase/orders/new', ui.need('purchase.edit'), async (req, res) => {

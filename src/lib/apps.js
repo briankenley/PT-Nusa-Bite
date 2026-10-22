@@ -46,7 +46,10 @@ const APPS = [
         { label: 'Receipts', href: '/inventory/pickings?type=in', perm: 'inventory.view' },
         { label: 'Vendors', href: '/contacts?f=vendor', perm: 'contacts.view' },
       ],
-      reporting: [{ label: 'Vendor Bills', href: '/accounting/bills', perm: 'accounting.view' }],
+      reporting: [
+        { label: 'Reorder Suggestions (F-23)', href: '/purchase/reorder', perm: 'purchase.view' },
+        { label: 'Vendor Bills', href: '/accounting/bills', perm: 'accounting.view' },
+      ],
       configuration: [{ label: 'Products & Vendor Pricelist', href: '/products', perm: 'products.view' }],
     },
   },

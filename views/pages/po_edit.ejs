@@ -10,7 +10,7 @@
   <div class="fields"><div>
     <div class="field"><label for="ref">Order Reference</label><input id="ref" value="<%= order ? order.number : 'otomatis dari sequence (PO000xx)' %>" readonly data-test="po-number"></div>
     <div class="field"><label for="partner_id">Vendor</label><select id="partner_id" name="partner_id" required <%= order ? 'disabled' : '' %>><option value="">— pilih vendor —</option>
-      <% for (const v of vendors) { %><option value="<%= v.id %>" <%= order && order.partner_id === v.id ? 'selected' : '' %>><%= v.code %> — <%= v.name %> (<%= v.payment_term_code %>)</option><% } %></select></div>
+      <% for (const v of vendors) { %><option value="<%= v.id %>" <%= (order && order.partner_id === v.id) || (typeof vendorId !== 'undefined' && vendorId === v.id) ? 'selected' : '' %>><%= v.code %> — <%= v.name %> (<%= v.payment_term_code %>)</option><% } %></select></div>
   </div><div>
     <div class="field"><span class="lbl">Deliver To</span><span>WH-PKU — Gudang Pekanbaru</span></div>
     <div class="field"><label for="note">Note</label><input id="note" name="note" value="<%= order ? order.note || '' : '' %>"></div>
