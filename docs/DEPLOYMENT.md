@@ -66,7 +66,8 @@ Sumber: [Render Blueprint YAML Reference](https://render.com/docs/blueprint-spec
 
 | Gejala | Penyebab | Solusi |
 |---|---|---|
-| Log `Gagal terhubung ke database` | URI/password salah atau layanan Aiven mati | Salin ulang Service URI; pastikan status Aiven *Running*. |
+| Log `Database belum dapat dihubungi … ENOTFOUND …aivencloud.com` | Layanan Aiven masih **Building / Setting up vm** sehingga nama host belum terdaftar di DNS, atau URI salah ketik | Tunggu status Aiven **Running** (biasanya beberapa menit). Aplikasi mencoba ulang otomatis dan pulih sendiri; halaman menampilkan "Database sedang disiapkan" (HTTP 503) sementara itu. Bila status sudah Running tetapi masih ENOTFOUND, salin ulang Service URI. |
+| Log `ECONNREFUSED` / `ETIMEDOUT` / `Access denied` | Port, password, atau layanan dimatikan | Salin ulang Service URI; nyalakan layanan Aiven bila *Powered off*. |
 | `self signed certificate` / TLS error | CA tidak cocok | Tempel ulang CA certificate di `DB_SSL_CA` tanpa spasi tambahan. |
 | Login selalu kembali ke halaman login di lokal dengan `NODE_ENV=production` | Cookie `Secure` hanya dikirim lewat HTTPS | Di lokal jangan set `NODE_ENV=production`, atau akses lewat HTTPS. |
 | Halaman lambat dibuka pertama kali | Render free sedang tidur | Tunggu ±1 menit; buka URL sebelum demo. |

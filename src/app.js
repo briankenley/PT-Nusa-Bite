@@ -13,7 +13,11 @@ const money = require('./lib/money');
 const time = require('./lib/time');
 const ui = require('./lib/ui');
 
-function createApp() {
+/**
+ * readiness: { ready, attempt } — saat database belum bisa dihubungi (mis. layanan MySQL masih dibuat),
+ * server tetap hidup dan menjawab 503 sampai koneksi berhasil.
+ */
+function createApp({ readiness = { ready: true, attempt: 0 } } = {}) {
   const app = express();
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, '..', 'views'));
@@ -22,7 +26,16 @@ function createApp() {
 
   app.use('/static', express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
   app.get('/healthz', async (req, res) => {
-    try { await db.query('SELECT 1'); res.json({ ok: true }); } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+    if (!readiness.ready) return res.status(503).json({ ok: false, db: 'connecting', attempt: readiness.attempt });
+    try { await db.query('SELECT 1'); res.json({ ok: true }); } catch (e) { res.status(503).json({ ok: false, db: 'unreachable', error: e.code || 'error' }); }
+  });
+  app.use((req, res, next) => {
+    if (readiness.ready) return next();
+    res.status(503).set('Retry-After', '10').type('html').send(`<!doctype html><html lang="id"><head><meta charset="utf-8">
+      <meta http-equiv="refresh" content="10"><title>Menyiapkan database — NusaBite ERP</title>
+      <link rel="stylesheet" href="/static/css/app.css"></head><body><div class="login-wrap"><div class="login">
+      <h1>NusaBite ERP</h1><p>Database sedang disiapkan atau belum dapat dihubungi. Halaman ini memuat ulang otomatis setiap 10 detik.</p>
+      <p class="muted small">Percobaan koneksi ke-${readiness.attempt}. Detail ada di log server.</p></div></div></body></html>`);
   });
   app.use(express.urlencoded({ extended: true, limit: '300kb' }));
   app.use(cookieSession({
