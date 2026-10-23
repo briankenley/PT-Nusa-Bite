@@ -35,7 +35,7 @@ Sumber pembagian: tabel *Peran dan tanggung jawab kelompok* dan *RACI Matrix* di
 1. **Undang kolaborator**: GitHub → repositori → **Settings → Collaborators → Add people** → masukkan username M1–M4 → role **Write**. Sumber: [Inviting collaborators to a personal repository](https://docs.github.com/articles/inviting-collaborators-to-a-personal-repository).
 2. **Buat branch `main`** dari kode yang sekarang: tab **Code** → dropdown branch → ketik `main` → **Create branch: main from `claude/affectionate-ride-ohb3lc`**.
 3. Jadikan default: **Settings → General → Default branch → `main`**.
-4. (Disarankan) **Settings → Branches → Add rule** untuk `main`: *Require a pull request before merging* + *Require approvals: 1*.
+4. (Disarankan) **Settings → Branches → Add rule** untuk `main`: *Require a pull request before merging* + *Require approvals: 1* + *Require status checks to pass* → pilih **test** (workflow **Tes otomatis** di `.github/workflows/test.yml`, berjalan otomatis di setiap PR: lint, `npm test`, 38 skenario UI, dan tes UI anggota `e2e/m*-*.js`). Branch `main` harus dibuat dari commit terbaru agar workflow ini ikut.
 5. **Render**: service `nusabite-erp` → **Settings → Build & Deploy → Branch** → ubah ke `main`. Di bagian yang sama, **Build Filters → Ignored Paths**: `docs/**`, `*.md`, `test/**`, `e2e/**` agar perubahan dokumen/tes tidak memicu deploy ulang.
 6. Bagikan ke tim: link repositori, URL aplikasi `https://nusabite-erp.onrender.com`, dan akun uji (`*.demo` / `demo1234`). **Jangan** membagikan password akun Render/Aiven atau Service URI database di chat.
 

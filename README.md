@@ -6,7 +6,7 @@ Aplikasi web ERP untuk studi kasus **24SI2 · Group 04 · F&B Fast Food** (Pekan
 |---|---|
 | Stack | Node.js 22 · Express 5 · EJS · **MySQL 8** (mysql2) |
 | Data | Baseline seed persis Bagian 4 handout: 773 unit / Rp5.422.000, saldo pembuka Rp43.722.000, S00007 · PO00007 · L00007 |
-| Pengujian | `npm test` → 49 tes layanan (T-01…T-38 + race condition + regresi) · `npm run evidence` → **38/38 skenario lewat UI** dengan screenshot ([hasil](docs/TEST_RESULTS.md)) |
+| Pengujian | `npm test` → 49 tes layanan (T-01…T-38 + race condition + regresi) · `npm run evidence` → **38/38 skenario lewat UI** dengan screenshot ([hasil](docs/TEST_RESULTS.md)) · keduanya dijalankan otomatis di setiap Pull Request oleh GitHub Actions ([workflow](.github/workflows/test.yml)) |
 | Deployment | Render (web) + Aiven (MySQL) — [panduan](docs/DEPLOYMENT.md) |
 
 ## Akun uji (password `demo1234`)

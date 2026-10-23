@@ -9,6 +9,16 @@ Bagian 13 handout: penggunaan AI **diizinkan** dalam metode vibe coding **dengan
 | Claude Code (Anthropic), sesi cloud | Analisis handout, desain skema & aturan, penulisan kode aplikasi, tes otomatis, skrip bukti Playwright, draf dokumen | Seluruh commit awal di repositori ini dibuat dari sesi tersebut (lihat `Co-Authored-By` pada commit). |
 | _isi bila ada (mis. Antigravity, ChatGPT, Copilot)_ | | |
 
+## Tugas pengembangan anggota (Fase 3)
+
+Kode empat tugas pengembangan — **M1** Mark as Lost (F-04), **M2** Inventory Adjustment (F-07), **M3** tombol produk Quick Counter (F-21), **M4** laporan AR Aging (F-15) — **juga dibuat dengan Claude Code**, atas permintaan pemilik repositori, termasuk tes layanan dan tes UI-nya. Kode itu diserahkan ke anggota sebagai paket siap tempel; anggota yang **membaca, memahami, menguji, mem-push dari akunnya sendiri, dan mempertahankannya saat demo**. Agar hal ini tidak tersamar:
+
+- setiap commit fitur memuat trailer `Co-authored-by: Claude <noreply@anthropic.com>`;
+- setiap PR fitur menambahkan `docs/team/ai-usage-M1.md` … `ai-usage-M4.md` yang diisi anggota sendiri: apa yang dibuat AI, apa yang dikerjakan anggota, perubahan yang ia buat, bukti verifikasi, dan penjelasan dengan kata-katanya sendiri;
+- hasil uji otomatis setiap PR tercatat di GitHub Actions (workflow **Tes otomatis**).
+
+Penilaian individu tetap bergantung pada pemahaman dan jawaban demo masing-masing anggota, bukan pada siapa yang mengetik kodenya.
+
 ## Cara kerja yang diterapkan
 
 1. **Requirement dulu, kode kemudian.** Setiap SR-xx diterjemahkan ke aturan di layanan + constraint database; konflik ditulis di [DECISION_LOG.md](DECISION_LOG.md) sebelum dikodekan.

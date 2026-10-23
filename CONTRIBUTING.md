@@ -83,9 +83,10 @@ Lalu buka GitHub → **Compare & pull request**.
 ## 4. Pull Request dan review
 
 1. Isi template PR (otomatis muncul): apa yang diubah, F/SR/T terkait, bukti tes, catatan AI.
-2. Minta review minimal **satu anggota lain** (pemilik modul terkait atau M4 untuk QA).
-3. Setelah disetujui, pemilik repositori / M4 melakukan **merge**. Jangan merge PR sendiri tanpa review.
-4. Setelah merge kode (bukan dokumen), Render otomatis deploy ulang. Cek `/healthz` dan reset baseline bila perlu.
+2. Tunggu pemeriksaan otomatis **Tes otomatis / test** (GitHub Actions, ±5–15 menit) menjadi ✅. Pemeriksaan ini menjalankan lint, `npm test`, 38 skenario UI, dan tes UI anggota di MySQL sementara (bukan database produksi), jadi anggota yang mengedit lewat browser (github.dev) tetap punya bukti lulus/gagal. Screenshot hasilnya: **Details → Summary → Artifacts → bukti-screenshot**.
+3. Minta review minimal **satu anggota lain** (pemilik modul terkait atau M4 untuk QA).
+4. Setelah disetujui dan CI hijau, pemilik repositori / M4 melakukan **merge**. Jangan merge PR sendiri tanpa review.
+5. Setelah merge kode (bukan dokumen), Render otomatis deploy ulang. Cek `/healthz` dan reset baseline bila perlu.
 
 ## 5. Yang tidak boleh di-commit
 
