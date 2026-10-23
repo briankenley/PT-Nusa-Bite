@@ -70,7 +70,7 @@ npm run lint
 | AI-tool usage note | [docs/AI_USAGE.md](docs/AI_USAGE.md) | ✅ |
 | Role Assignment Sheet | [docs/ROLE_ASSIGNMENT.md](docs/ROLE_ASSIGNMENT.md) | Template — isi nama |
 | Team Agreement | [docs/TEAM_AGREEMENT.md](docs/TEAM_AGREEMENT.md) | Template — sepakati |
-| Kontribusi tiap anggota + history commit | [docs/CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md) | **Harus diisi tim** |
+| Kontribusi tiap anggota + history commit | [docs/CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md) · pembagian kerja [docs/team/](docs/team/README.md) | **Harus diisi tim** |
 | Video demo ≤ 10 menit & presentasi | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | Naskah; **direkam & dibawakan tim** |
 
 Nama berkas penyerahan: `Group04_24SI2_FastFood_<ItemName>` (contoh `Group04_24SI2_FastFood_TestResults`).
@@ -87,6 +87,10 @@ Nama berkas penyerahan: `Group04_24SI2_FastFood_<ItemName>` (contoh `Group04_24S
 | D-06 | SR-20 | Overpayment ditolak | `ALLOW_OVERPAYMENT` |
 
 Detail, pihak yang dirugikan, dan bukti: [docs/DECISION_LOG.md](docs/DECISION_LOG.md).
+
+## Kerja tim
+
+Pembagian modul, file, fitur, tes, dan tugas per anggota ada di [docs/team/README.md](docs/team/README.md) ([M1](docs/team/M1.md) · [M2](docs/team/M2.md) · [M3](docs/team/M3.md) · [M4](docs/team/M4.md)). Cara commit dan Pull Request dari akun masing-masing: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Catatan integritas akademik
 

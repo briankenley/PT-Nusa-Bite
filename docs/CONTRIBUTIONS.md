@@ -2,6 +2,8 @@
 
 > **Penting dan jujur:** seluruh commit awal di repositori ini dibuat dari satu sesi Claude Code (alat AI) atas permintaan pemilik repositori untuk menguji kemampuan AI menyelesaikan walkthrough. Rubrik menilai **kontribusi individu, riwayat commit, output peran, peer assessment, dan jawaban demo**, serta mewajibkan modul co-owned dibangun **dua kontributor nyata**. Karena itu tabel di bawah harus diisi dengan kontribusi nyata setiap anggota (mis. review, perbaikan, pengujian, perubahan yang di-commit dari akun masing-masing) — jangan mengklaim kode AI sebagai kerja pribadi tanpa mencatatnya di `AI_USAGE.md`.
 
+Tugas tiap anggota: [docs/team/README.md](team/README.md). Setiap anggota mengisi **barisnya sendiri** lewat Pull Request dari akunnya.
+
 | Member | Role | Module | F built | T tested | Key commits (hash / PR) |
 |---|---|---|---|---|---|
 | M1 | Product Owner / BA | Sales, CRM | | | |
