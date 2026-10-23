@@ -1,0 +1,85 @@
+# Menjalankan semua tes otomatis di setiap Pull Request (dan push ke main), sehingga anggota yang
+# mengedit lewat browser (github.dev) tetap mendapat bukti "lulus/gagal" tanpa memasang Node/MySQL.
+# Database di sini adalah MySQL sementara milik runner, BUKAN database produksi Aiven.
+name: Tes otomatis
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: nusabite
+          MYSQL_USER: nusabite
+          MYSQL_PASSWORD: nusabite
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: nusabite
+      DB_PASSWORD: nusabite
+      DB_NAME: nusabite
+      SESSION_SECRET: ci-only-not-secret
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pasang dependensi
+        run: npm ci
+      - name: Siapkan database tes (nusabite_test)
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS nusabite_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON nusabite_test.* TO 'nusabite'@'%';"
+      - name: Lint
+        run: npm run lint
+      - name: Tes layanan + database (npm test)
+        run: npm test
+      - name: Siapkan browser Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Jalankan aplikasi
+        run: |
+          npm run db:reset
+          nohup node src/server.js > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/healthz && exit 0; sleep 2; done
+          cat server.log; exit 1
+      - name: 38 skenario UI T-01…T-38 (npm run evidence)
+        run: npm run evidence
+      - name: Tes UI fitur anggota (e2e/m*-*.js bila ada)
+        run: |
+          for f in e2e/m*-*.js; do
+            [ -f "$f" ] || continue
+            echo "== $f"
+            SHOTS_DIR=ci-screens node "$f"
+          done
+      - name: Unggah screenshot bukti
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: bukti-screenshot
+          path: |
+            docs/evidence/*.jpg
+            docs/TEST_RESULTS.md
+            ci-screens/
+            server.log
+          if-no-files-found: ignore
+          retention-days: 14
