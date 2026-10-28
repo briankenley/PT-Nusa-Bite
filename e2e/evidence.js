@@ -923,18 +923,18 @@ async function main() {
   }
   await browser.close();
   await resetBaseline();
-  if (!only.length) writeReport(results);
+  if (!only.length) writeReport(results, (await db.one('SELECT VERSION() AS v')).v);
   await db.closePool();
   if (results.some((r) => !r.pass)) process.exitCode = 1;
 }
 
-function writeReport(results) {
+function writeReport(results, mysqlVersion) {
   const passed = results.filter((r) => r.pass).length;
   const now = new Date();
   const lines = [
     '# Hasil Pengujian T-01 – T-38',
     '',
-    `Dijalankan otomatis lewat antarmuka web (Playwright + Chromium) pada ${now.toISOString().slice(0, 16).replace('T', ' ')} UTC terhadap MySQL 8.0.`,
+    `Dijalankan otomatis lewat antarmuka web (Playwright + Chromium) pada ${now.toISOString().slice(0, 16).replace('T', ' ')} UTC terhadap MySQL ${mysqlVersion}.`,
     'Setiap tes dimulai dari **baseline seed segar** (fixture). Tes bertanda "After T-xx" menjalankan ulang prasyaratnya lewat UI.',
     'Untuk tes aturan, hasil yang seharusnya ditentukan dari SR-xx dan keputusan di [DECISION_LOG.md](DECISION_LOG.md).',
     '',
